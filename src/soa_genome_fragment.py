@@ -3,6 +3,7 @@
 
 '''
 
+from Bio.Seq import Seq
 from Bio import Entrez
 from soa_features import GenomeFeature
 from soa_operon import Operon
@@ -652,6 +653,10 @@ class GenomeFragment:
 
             #Set the promoter sequence
             prom_seq = genome_fragment_seq[prom_start:prom_end]
+
+            #If the operon is on the minus strand, the promoter sequence needs to be the reverse complement to account for that
+            prom_seq = str(Seq(data=prom_seq).reverse_complement())
+            
             tqdm.write('-------------------- Got promoter for ' + op.operon_id + ' from ' + str(prom_start) + ' to ' + str(prom_end) + ' on strand ' + str(op.strand))
             op.promoter = prom_seq
 
