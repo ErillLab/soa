@@ -509,7 +509,7 @@ def soa():
                 continue
             
             
-            if len(operon.promoter) < 10 or len(operon.promoter > 300):  ############### NEED TO PARAMATIZE SIZE BOUNDS ############
+            if len(operon.promoter) < 10 or len(operon.promoter) > 300:  ############### NEED TO PARAMATIZE SIZE BOUNDS ############
                 continue
 
             op_added_to_cluster = False
