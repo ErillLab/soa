@@ -74,3 +74,124 @@ def get_motifs(meme_data_dir, e_val_threshold):
     
     return motifs 
 
+
+
+################## Functions below are all collectively used to calculate the distance between two motifs. ###################
+# Approach:
+# 1. Determine the optimal alignment of the two motifs by maximizing the information content of the alignments.
+# 2. Calculate the distance between each of the columns in the alignment.
+# 3. The average distance between the columns is assigned to be the distance between the two motifs.
+
+def get_ic(motif_a, motif_b, offset):
+    '''
+    Calculates the information content for the alignment of interest. 
+
+    Parameters
+    ---------
+    motif_a, motif_b: Motif objects
+        The two motifs of interest.
+    offset: int
+        The alignment is represented as an offset value. See soa_motif_analysis.get_alignment_offset(). 
+    '''
+
+    #Pull out the sequences from motif_a that are part of the alignemt
+    a_seqs = []
+
+    for sequence in motif_a.instances:
+
+        start_pos = 0
+        end_pos = len(sequence)
+
+        if offset < 0:
+            start_pos = 0
+        
+        if offset > 0:
+            start_pos = offset
+        
+        end_pos = len(motif_b) + offset
+        a_seqs.append(sequence[start_pos:end_pos])
+    
+    print(a_seqs[0])
+    
+
+    #Pull out the sequences from motif_b that are part of the alignment
+    b_seqs = []
+
+    for sequence in motif_b.instances:
+        
+        start_pos = 0
+        end_pos = len(sequence)
+
+        if offset < 0:
+            
+            if len(motif_a) == len(motif_b):
+                start_pos = -(len(motif_b) + offset)
+                end_pos = None
+            else:
+                start_pos = offset * -1
+                end_pos = len(motif_a) + offset
+        
+        if offset > 0:
+            start_pos = 0
+            end_pos = len(motif_a) - offset
+        
+        
+        b_seqs.append(sequence[start_pos:end_pos])
+
+    print(b_seqs[0])
+
+
+
+def get_alignment_offset(motif_a, motif_b):
+    '''
+    Determines the best alignment between the two motifs and returns the offset required to obtain the alignment. The optimal alignment is chosen as the gapless alignment that maximizes the information content shared between the two motifs. 
+
+    Parameters
+    ----------
+    motif_a, motif_b: Motif objects
+        The two motifs of interest.
+    
+    Returns
+    -------
+    alignment_offset: [int]
+        The alignment is returned as a list equivalent offeset values. A offset value is the number of columns between the first position of motif_a and motif_b. The offset has range: -len(motif_a) + 1 < offset < len(motif_b).
+        At the minimum value of -len(motif_a) + 1, the offset means that the first position of motif_b is aligned with the last position in motif_a. 
+        At the maximum value of len(motif_b), the offset means that the first position of motif_a is aligned with the last position of motif_a.
+        An offset of zero means that the first position of motif_a is aligned with the first position of motif_b.
+    '''
+
+    #Holds the maximum information content. Currently set to negative infinity. 
+    max_ic = float('-inf')
+ 
+    alignment_offsets = []
+
+    for offset in range(-len(motif_b) + 1, len(motif_a)):
+        
+        #Calculate the information content for the alignment with the current offset. 
+        curr_ic = 0
+
+        if curr_ic >= max_ic:
+            alignment_offsets.append(offset)
+    
+    return alignment_offsets
+
+
+
+def calculate_motif_distance(motif_one, motif_two):
+    '''
+    Returns the distance between two motifs by:
+        1. Finding the optimal alignment that maximizes the information content. 
+        2. Computes the Euclidian distance or the KL divergence between the aligned columns. 
+    
+    Parameters
+    ----------
+    motif_one, motif_two: Motif objects
+
+    Returns
+    -------
+    motif_distance: float
+        The computed distance between the two motifs.
+    '''
+
+    pass
+
