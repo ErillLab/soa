@@ -1,0 +1,39 @@
+{
+    "entrez":[{
+        "request_limit": 5,
+        "sleep_time": 5,
+        "email": "EMAIL",
+        "api_key": "KEY"
+    }],
+
+    "blast":[{
+        "minimum_coverage": 0.75,
+        "blastdb_path": "/Volumes/Issac_Ext/ErillsLab/SOA/vibrio_nucl/vibrio_database_nucl",
+        "blast_num_threads": 5,
+        "rev_blast_num_threads": 5
+    }],
+
+    "reference_species":[{
+        "reference_genome_assembly_accession": "GCF_000006745.1",
+        "reference_genome_accessions": ["NC_002505.1", "NC_002506.1"],
+        "reference_genome_name": "Vibrio cholerae O1 biovar El Tor str. N16961",
+        "reference_operons_file": "/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/reference_operons/test.csv"
+    }],
+
+    "operon_prom_assemb":[{
+        "operon_min_width": 10,
+        "operon_max_width": 300,
+        "max_seq_sim": 0.85
+    }],
+
+    "meme_motif":[{
+        "meme_exec_path": "/Users/ichaudr/Documents/UMBC/Lab-Erill/meme-5.3.0/src/meme",
+        "motif_e_val_threshold": 10E-3
+    }],
+
+    "output":[{
+        "cache_dir": "/Volumes/Issac_Ext/ErillsLab/nucleotide_gbwithparts_cache/"
+    }]
+
+
+}

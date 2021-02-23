@@ -6,8 +6,9 @@ https://meme-suite.org/meme//doc/meme.html?man_type=web (command line version)
 
 '''
 
-from Bio.motifs import meme
+from Bio.motifs import meme, Motif, Instances
 import os
+import math
 
 
 
@@ -91,55 +92,32 @@ def get_ic(motif_a, motif_b, offset):
     motif_a, motif_b: Motif objects
         The two motifs of interest.
     offset: int
-        The alignment is represented as an offset value. See soa_motif_analysis.get_alignment_offset(). 
+        The alignment is represented as an offset value. See soa_motif_analysis.get_alignment_offset().
+    
+    Returns
+    -------
+    max_ic: float
+        The informtion content for the alignment
     '''
 
-    #Pull out the sequences from motif_a that are part of the alignemt
+    #The sequences of motif_a and motif_b that are in the alignment given by the offset 
     a_seqs = []
-
-    for sequence in motif_a.instances:
-
-        start_pos = 0
-        end_pos = len(sequence)
-
-        if offset < 0:
-            start_pos = 0
-        
-        if offset > 0:
-            start_pos = offset
-        
-        end_pos = len(motif_b) + offset
-        a_seqs.append(sequence[start_pos:end_pos])
-    
-    print(a_seqs[0])
-    
-
-    #Pull out the sequences from motif_b that are part of the alignment
     b_seqs = []
 
-    for sequence in motif_b.instances:
-        
-        start_pos = 0
-        end_pos = len(sequence)
-
-        if offset < 0:
-            
-            if len(motif_a) == len(motif_b):
-                start_pos = -(len(motif_b) + offset)
-                end_pos = None
-            else:
-                start_pos = offset * -1
-                end_pos = len(motif_a) + offset
-        
-        if offset > 0:
-            start_pos = 0
-            end_pos = len(motif_a) - offset
-        
-        
-        b_seqs.append(sequence[start_pos:end_pos])
-
-    print(b_seqs[0])
-
+    if offset < 0:
+        offset = -offset
+        alignment_length = min(len(motif_b)-offset, len(motif_a))
+        a_seqs = [seq[:alignment_length] for seq in motif_a.instances]
+        b_seqs = [seq[offset:alignment_length+offset] for seq in motif_b.instances]
+    else:
+        alignment_length = min(len(motif_a)-offset, len(motif_b))
+        a_seqs = [seq[offset:alignment_length+offset] for seq in motif_a.instances]
+        b_seqs = [seq[:alignment_length] for seq in motif_a.instances]
+    
+    #Create a temp Motif object with the combined sequences from motif_a and motif_b. 
+    temp_motif = Motif(instances=Instances(a_seqs+b_seqs))
+    temp_motif.pseudocounts = dict(A=0.25, C=0.25, G=0.25, T=0.25)
+    return temp_motif.pssm.mean()
 
 
 def get_alignment_offset(motif_a, motif_b):
@@ -168,7 +146,7 @@ def get_alignment_offset(motif_a, motif_b):
     for offset in range(-len(motif_b) + 1, len(motif_a)):
         
         #Calculate the information content for the alignment with the current offset. 
-        curr_ic = 0
+        curr_ic = get_ic(motif_a, motif_b, offset)
 
         if curr_ic >= max_ic:
             alignment_offsets.append(offset)
@@ -177,7 +155,7 @@ def get_alignment_offset(motif_a, motif_b):
 
 
 
-def calculate_motif_distance(motif_one, motif_two):
+def calculate_motif_distance(motif_a, motif_b):
     '''
     Returns the distance between two motifs by:
         1. Finding the optimal alignment that maximizes the information content. 
@@ -193,5 +171,25 @@ def calculate_motif_distance(motif_one, motif_two):
         The computed distance between the two motifs.
     '''
 
-    pass
+    #Determine the optimal alignments for the two motifs
+    alignment_offsets = get_alignment_offset(motif_a, motif_b)
+
+    if len(alignment_offsets) == 0:
+        print('Error - no alignemnt was found.')
+        return -1
+    
+    #Holds all calculated distances
+    distances = []
+
+    for offset in alignment_offsets:
+        for pos in range(min(len(motif_a), len(motif_b) - offset)):
+            cola = dict((let, motif_a.pwm[let][pos]) for let in "ACTG")
+            colb = dict((let, motif_b.pwm[let][pos + offset]) for let in "ACTG")
+
+            distances.append(math.sqrt(sum((cola[let]-colb[let])**2 for let in "ACTG")))
+
+    return sum(distances) / len(distances)
+
+##################################################################################################################################
+    
 

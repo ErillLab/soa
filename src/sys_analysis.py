@@ -25,6 +25,8 @@ import csv
 import os
 import os.path
 import pickle
+import json
+import sys
 
 
 #Entrez Parameters
@@ -37,6 +39,7 @@ SLEEP_TIME = 0.5
 reference_assembly_accession = 'GCF_000006745.1'
 reference_genome_accessions = ['NC_002505.1', 'NC_002506.1']
 reference_genome_name = 'NamePlaceHolder'
+reference_operons_file = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/reference_operons/test.csv'
 
 #BLAST Parameters
 local_blast_root = '../local_blast_bin/'
@@ -53,13 +56,19 @@ rev_blast_input_file = rev_blast_root + 'input.fasta'
 rev_blast_output_file = rev_blast_root + 'output'
 rev_blast_num_threads = 5
 
-#Input file path
-reference_operons_file = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/reference_operons/test.csv'
+#Operon Assembly and Promoter Parameters
+operon_min_width = 10
+operon_max_width = 300
+max_seq_sim = .85
+
+#MEME and motif parameters
+meme_exec_path = ''
+motif_e_val_threshold = 10E-3
 
 #Output Parameters
 cache_dir = '/Volumes/Issac_Ext/ErillsLab/nucleotide_gbwithparts_cache/'
-promoter_out_dir = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/output/promoter_seqs/{id}_promoters.fasta'
-meme_out_dir = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/{id}_meme_out/'
+promoter_out_dir = '../output/promoter_seqs/{id}_promoters.fasta'
+meme_out_dir = '../meme_bin/{id}_meme_out/'
 
 
 def local_blast_search(input_record, db_path, operon_id, db_id='Vibrio', e_cutoff=10E-10, min_cover=None):
@@ -389,6 +398,62 @@ def get_reference_intergenic_distace(genes):
 
     return max_intergenic_distance
 
+def load_input_json(path):
+    '''
+    Loads the parameters from the input JSON file.
+
+    Parameters
+    ---------
+    path: str
+        Path to the input JSON
+    
+    Returns
+    -------
+    None
+    '''
+
+    file_reader = json.load(open(path))
+
+    global REQUEST_LIMIT
+    global SLEEP_TIME
+    REQUEST_LIMIT = file_reader['entrez'][0]['request_limit']
+    SLEEP_TIME = file_reader['entrez'][0]['sleep_time']
+    Entrez.email = file_reader['entrez'][0]['email']
+    Entrez.api = file_reader['entrez'][0]['api_key']
+
+    global minimum_coverage
+    global blastdb_path
+    global blast_num_threads
+    global rev_blast_num_threads
+    minimum_coverage = file_reader['blast'][0]['minimum_coverage']
+    blastdb_path = file_reader['blast'][0]['blastdb_path']
+    blast_num_threads = file_reader['blast'][0]['blast_num_threads']
+    rev_blast_num_threads = file_reader['blast'][0]['rev_blast_num_threads']
+
+    global reference_assembly_accession
+    global reference_genome_accessions
+    global reference_genome_name
+    global reference_operons_file
+    reference_assembly_accession = file_reader['reference_species'][0]['reference_genome_assembly_accession']
+    reference_genome_accessions = file_reader['reference_species'][0]['reference_genome_accessions']
+    reference_genome_name = file_reader['reference_species'][0]['reference_genome_name']
+    reference_operons_file = file_reader['reference_species'][0]['reference_operons_file']
+
+    global operon_min_width
+    global operon_max_width
+    global max_seq_sim
+    operon_min_width = file_reader['operon_prom_assemb'][0]['operon_min_width']
+    operon_max_width = file_reader['operon_prom_assemb'][0]['operon_max_width']
+    max_seq_sim = file_reader['operon_prom_assemb'][0]['max_seq_sim']
+
+    global meme_exec_path
+    global motif_e_val_threshold
+    meme_exec_path = file_reader['meme_motif'][0]['meme_exec_path']
+    motif_e_val_threshold = file_reader['meme_motif'][0]['motif_e_val_threshold']
+
+    global cache_dir
+    cache_dir = file_reader['output'][0]['cache_dir']
+
 
 def soa():
     '''
@@ -509,7 +574,7 @@ def soa():
                 continue
             
             
-            if len(operon.promoter) < 10 or len(operon.promoter) > 300:  ############### NEED TO PARAMETERIZE SIZE BOUNDS ############
+            if len(operon.promoter) < operon_min_width or len(operon.promoter) > operon_max_width:
                 continue
 
             op_added_to_cluster = False
@@ -538,7 +603,7 @@ def soa():
     #Filter promoters for each operon cluster
     for cluster in tqdm(operon_clusters, desc='Filtering promoters'):
         tqdm.write('Filtering ' + cluster.cluster_id)
-        cluster.filter_promoters(threhold_percent_id=0.85)
+        cluster.filter_promoters(threhold_percent_id=max_seq_sim)
         cluster.write_promoters(output_file=promoter_out_dir.format(id=cluster.cluster_id))
     
     #Preform MEME analysis on all of the clusters
@@ -550,9 +615,11 @@ def soa():
         out_dir = meme_out_dir.format(id=cluster.cluster_id)
 
         run_meme(input_file=in_file, output_dir=out_dir)
-        cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=10E-3)
-    
+        cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
+
     for c in operon_clusters:
+        cluster_file_name = '../output/complete_clusters/{cluster_id}.p'
+        pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id)))
         print(c)
         print('~'*15)
         
@@ -583,4 +650,13 @@ def soa():
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) != 2:
+        print('Incorrect input. Usage: sys_analysis.py [inputfile_name].json')
+        quit
+
+    full_file_path = '../input/' + sys.argv[1]
+
+    print('Loading input file "', full_file_path, '" ...')
+    load_input_json(full_file_path)
     soa()
