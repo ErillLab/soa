@@ -5,20 +5,27 @@ A testing module to test other modules.
 '''
 
 import soa_sim_filter
-from soa_motif_analysis import get_ic, get_motifs, calculate_motif_distance
+from soa_motif_analysis import  calculate_motif_distance, get_motifs
+from Bio.motifs import Motif, Instances
 
-test_meme_output = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1039_meme_out/'
 
-records = get_motifs(test_meme_output, 1)
+test_meme_output_1 = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1039_meme_out/'
+test_meme_output_2 = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1708_meme_out/'
 
-motif_a = records[2]
-motif_b = records[3]
+records_1 = get_motifs(test_meme_output_1, 100)
+records_2 = get_motifs(test_meme_output_2, 100)
 
-print(motif_a)
+#print(len(records_1))
 
-print(motif_b)
+#print(len(records_2))
 
-print(calculate_motif_distance(motif_a, motif_b))
+#motif_a = records_1[2]
+#motif_b = records_2[0]
+
+motif_a = records_1[0]
+motif_b = records_2[0]
+
+print(calculate_motif_distance(motif_a, motif_b, padded=True))
 
 '''
 print(motif_a.instances[0])
@@ -32,3 +39,16 @@ b_seqs = []
 for offset in range(-len(motif_b) + 1, len(motif_a)):
     print('Working on offset ', offset, ':')
     get_ic(motif_a, motif_b, offset)'''
+'''
+
+motif_a = Motif(instances=Instances(['AAAAAAATCG' ,'AAAAAAGATC','AAAAAACGAT','AAAAAATCGA']))
+
+motif_b = Motif(instances=Instances(['ATCGAAAAAA','GATCAAAAAA','CGATAAAAAA','TCGAAAAAAA']))
+
+print(motif_a.pwm)
+print(motif_a.pssm)
+
+print(motif_b.pwm)
+print(motif_b.pssm)
+
+print(calculate_motif_distance(motif_a, motif_b))'''

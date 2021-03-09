@@ -236,7 +236,7 @@ class AnnotatedHit(GenomeFeature):
     def __str__(self):
 
         to_return = "ANNOTATED HIT\n"
-        to_return = to_return + "Alignment start = " + str(self.five_end) + " and Alignment end: " + str(self.three_end) + "; strand:" + self.strand + "\n"
+        to_return = to_return + "Alignment start = " + str(self.five_end) + " and Alignment end: " + str(self.three_end) + "; strand:" + self.strand + "\nOperon ID:" + self.operon_id 
         to_return = to_return + super().__str__()
 
         return to_return

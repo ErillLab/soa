@@ -39,12 +39,14 @@ SLEEP_TIME = 0.5
 reference_assembly_accession = 'GCF_000006745.1'
 reference_genome_accessions = ['NC_002505.1', 'NC_002506.1']
 reference_genome_name = 'NamePlaceHolder'
+intergenic_dist_dir = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/reference_operons/intergenic_distances/'
 reference_operons_file = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/reference_operons/test.csv'
 
 #BLAST Parameters
 local_blast_root = '../local_blast_bin/'
 blast_results_filename = local_blast_root + '{query_accession}_{db_id}_{e_value}_{coverage}.p'
 minimum_coverage = 0.75
+e_cutoff = 10E-10
 blastdb_path = '/Volumes/Issac_Ext/ErillsLab/SOA/vibrio_nucl/vibrio_database_nucl'
 blast_num_threads = 5
 
@@ -57,9 +59,10 @@ rev_blast_output_file = rev_blast_root + 'output'
 rev_blast_num_threads = 5
 
 #Operon Assembly and Promoter Parameters
-operon_min_width = 10
-operon_max_width = 300
+promoter_min_width = 10
+promoter_max_width = 300
 max_seq_sim = .85
+operon_max_intergenic_distance = 150
 
 #MEME and motif parameters
 meme_exec_path = ''
@@ -101,6 +104,10 @@ def local_blast_search(input_record, db_path, operon_id, db_id='Vibrio', e_cutof
     if os.path.isfile(f_blast_results_file):
         print('Loading saved results: ' + str(f_blast_results_file))
         records = pickle.load(open(f_blast_results_file, 'rb'))
+
+        for r in records:
+            r.operon_id = operon_id
+
         print('--- Returning ' + str(len(records)) + ' saved hits for ' + str(input_record))
         return records
 
@@ -323,7 +330,7 @@ def check_reverse_blast(query_accession, annotated_hit):
                 
     return hit_returned_query
 
-def get_reference_intergenic_distace(genes):
+def get_reference_intergenic_distace(genes, operon_id):
     '''
     Determines the average intergeneic distance between a set of genes in an operon. 
 
@@ -331,12 +338,24 @@ def get_reference_intergenic_distace(genes):
     ----------
     genes: [str]
         The list of protein accessions that represent the products of the genes of interest.
+    operon_id: str
+        The operon id associated with these genes. Will be used to cache the value.
     
     Returns
     -------
     max_intergenic_distance: int
         The maximum intergenic distance.
     '''
+
+    #Check if the intergenic distance for this gene has been cached.
+    if os.path.exists(intergenic_dist_dir + operon_id + '.txt'):
+        with open(intergenic_dist_dir + operon_id + '.txt', 'r') as file:
+            return int(file.read())
+
+    if len(genes) == 1:
+        with open(intergenic_dist_dir + operon_id + '.txt', 'w') as file:
+            file.write(operon_max_intergenic_distance)
+        return operon_max_intergenic_distance
 
     #A list of GenomeFragment objects for each of the genome accessions associated with the reference
     reference_genome_frags = []
@@ -360,7 +379,10 @@ def get_reference_intergenic_distace(genes):
 
         #Determine if all the reference genes are present in this fragment
         for gene in genes:
-            
+
+            if not gene in [feat.protein_accession for feat in frag.all_features]:
+                all_genes_present = False
+            '''
             gene_found = False
             
             for feat in frag.all_features:
@@ -368,7 +390,7 @@ def get_reference_intergenic_distace(genes):
                     gene_found = True
 
             if not gene_found:
-                all_genes_present = False
+                all_genes_present = False'''
 
         #If all the genes were found in the fragment, it is added to the list of target fragments
         if all_genes_present:
@@ -388,13 +410,19 @@ def get_reference_intergenic_distace(genes):
                 if gene == feat.protein_accession:
                     ref_feats.append(feat)
         
-        if not len(ref_feats) == len(genes):
-            print("ABCDEF")
+        if len(ref_feats) < len(genes):
+            print("All genes not found for: ", genes, " when calculating intergenic distance in ", frag.name, ". Only found: ", [feat.genome_accession for feat in ref_feats], len(ref_feats), len(genes))
 
         for i in range(len(ref_feats) - 1):
             temp_distance = ref_feats[i].get_intergenic_distance(ref_feats[i+1])
             if temp_distance > max_intergenic_distance:
                 max_intergenic_distance = temp_distance
+
+    if max_intergenic_distance > operon_max_intergenic_distance:
+        max_intergenic_distance = operon_max_intergenic_distance
+    
+    with open(intergenic_dist_dir + operon_id + '.txt', 'w') as file:
+            file.write(max_intergenic_distance)
 
     return max_intergenic_distance
 
@@ -422,29 +450,37 @@ def load_input_json(path):
     Entrez.api = file_reader['entrez'][0]['api_key']
 
     global minimum_coverage
+    global e_cutoff
     global blastdb_path
     global blast_num_threads
     global rev_blast_num_threads
+    global local_blast_root
     minimum_coverage = file_reader['blast'][0]['minimum_coverage']
+    e_cutoff = file_reader['blast'][0]['e_cutoff']
     blastdb_path = file_reader['blast'][0]['blastdb_path']
     blast_num_threads = file_reader['blast'][0]['blast_num_threads']
     rev_blast_num_threads = file_reader['blast'][0]['rev_blast_num_threads']
+    local_blast_root = file_reader['blast'][0]['local_bin_dir']
 
     global reference_assembly_accession
     global reference_genome_accessions
     global reference_genome_name
     global reference_operons_file
+    global intergenic_dist_dir
     reference_assembly_accession = file_reader['reference_species'][0]['reference_genome_assembly_accession']
     reference_genome_accessions = file_reader['reference_species'][0]['reference_genome_accessions']
     reference_genome_name = file_reader['reference_species'][0]['reference_genome_name']
     reference_operons_file = file_reader['reference_species'][0]['reference_operons_file']
+    intergenic_dist_dir = file_reader['reference_species'][0]['intergenic_dist_dir']
 
-    global operon_min_width
-    global operon_max_width
+    global promoter_min_width
+    global promoter_max_width
     global max_seq_sim
-    operon_min_width = file_reader['operon_prom_assemb'][0]['operon_min_width']
-    operon_max_width = file_reader['operon_prom_assemb'][0]['operon_max_width']
+    global operon_max_intergenic_distance
+    promoter_min_width = file_reader['operon_prom_assemb'][0]['promoter_min_width']
+    promoter_max_width = file_reader['operon_prom_assemb'][0]['promoter_max_width']
     max_seq_sim = file_reader['operon_prom_assemb'][0]['max_seq_sim']
+    operon_max_intergenic_distance = file_reader['operon_prom_assemb'][0]['operon_max_intergenic_distance']
 
     global meme_exec_path
     global motif_e_val_threshold
@@ -504,13 +540,13 @@ def soa():
             all_operon_info.append(operon_info)
             
             for gene_id in gene_ids:
-                blast_hits.extend(local_blast_search(input_record=gene_id, db_path=blastdb_path, operon_id=operon_id, min_cover=minimum_coverage))
+                blast_hits.extend(local_blast_search(input_record=gene_id, db_path=blastdb_path, operon_id=operon_id, min_cover=minimum_coverage, e_cutoff=e_cutoff))
 
     print('Total number of hits returned: ' + str(len(blast_hits)))
 
     #Calculate all intergenic distances
     for op_info in tqdm(all_operon_info, desc='Calculating Intergenic Distance'):
-        op_info['intergenic_distance'] = get_reference_intergenic_distace(genes=op_info['gene_accessions'])
+        op_info['intergenic_distance'] = get_reference_intergenic_distace(genes=op_info['gene_accessions'], operon_id=op_info['operon_id'])
 
     #A list of all the GenomeFragments
     genome_fragments = []
@@ -574,7 +610,7 @@ def soa():
                 continue
             
             
-            if len(operon.promoter) < operon_min_width or len(operon.promoter) > operon_max_width:
+            if len(operon.promoter) < promoter_min_width or len(operon.promoter) > promoter_max_width:
                 continue
 
             op_added_to_cluster = False
