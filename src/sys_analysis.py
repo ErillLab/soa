@@ -289,11 +289,11 @@ def check_reverse_blast(query_accession, annotated_hit):
     annotated_hit: AnnotatedHit object
         The hit that is being tested. 
     '''
-    '''
+    
     global rev_blast_db
     global reference_assembly_accession
     global rev_blast_input_file
-    global rev_blast_output_file'''
+    global rev_blast_output_file
 
     #Input and output files
     temp_in = rev_blast_input_file.format(accession=reference_assembly_accession)
@@ -350,7 +350,7 @@ def get_reference_intergenic_distace(genes, operon_id):
     #Check if the intergenic distance for this gene has been cached.
     if os.path.exists(intergenic_dist_dir + operon_id + '.txt'):
         with open(intergenic_dist_dir + operon_id + '.txt', 'r') as file:
-            return int(file.read())
+            return int(file.readline())
 
     if len(genes) == 1:
         with open(intergenic_dist_dir + operon_id + '.txt', 'w') as file:
@@ -422,7 +422,7 @@ def get_reference_intergenic_distace(genes, operon_id):
         max_intergenic_distance = operon_max_intergenic_distance
     
     with open(intergenic_dist_dir + operon_id + '.txt', 'w') as file:
-            file.write(max_intergenic_distance)
+            file.write(str(max_intergenic_distance))
 
     return max_intergenic_distance
 
@@ -455,12 +455,14 @@ def load_input_json(path):
     global blast_num_threads
     global rev_blast_num_threads
     global local_blast_root
+    global blast_results_filename
     minimum_coverage = file_reader['blast'][0]['minimum_coverage']
     e_cutoff = file_reader['blast'][0]['e_cutoff']
     blastdb_path = file_reader['blast'][0]['blastdb_path']
     blast_num_threads = file_reader['blast'][0]['blast_num_threads']
     rev_blast_num_threads = file_reader['blast'][0]['rev_blast_num_threads']
     local_blast_root = file_reader['blast'][0]['local_bin_dir']
+    blast_results_filename = local_blast_root + '{query_accession}_{db_id}_{e_value}_{coverage}.p'
 
     global reference_assembly_accession
     global reference_genome_accessions
@@ -534,7 +536,7 @@ def soa():
             operon_info = {
                 'operon_id': operon_id,
                 'gene_accessions': gene_ids,
-                'intergenic_distance': 100
+                'intergenic_distance': operon_max_intergenic_distance
             }
 
             all_operon_info.append(operon_info)
@@ -655,7 +657,7 @@ def soa():
 
     for c in operon_clusters:
         cluster_file_name = '../output/complete_clusters/{cluster_id}.p'
-        pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id)))
+        pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id), 'wb'))
         print(c)
         print('~'*15)
         

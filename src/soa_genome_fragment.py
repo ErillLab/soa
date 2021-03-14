@@ -163,14 +163,14 @@ class GenomeFragment:
                             print("\t\tCould not download record after " + str(self.req_limit) + " attempts")
             
             if not record == None:
-                with open(record_file, 'w') as file:
+                with open(record_file, 'wb') as file:
                     file.write(record)
 
             
         with open(record_file, 'rb') as file:
             self.full_record = Entrez.read(file, 'xml')
 
-    def fetch_hit_features(self, margin_limit=20, max_attempts=5, mult_factor=3):
+    def fetch_hit_features(self, margin_limit=20, max_attempts=5, mult_factor=5):
         '''
         Attempts to fetch the full feature for each of the hits assigned to this genome fragment. Filters the list of hits so that there is no more than 1 hit per feature.
 
@@ -184,8 +184,13 @@ class GenomeFragment:
         '''
 
         #Fetch the feature for each hit
+        clean_hits = []
         for hit in self.hits:
-            hit.fetch_feature(self.full_record, margin_limit=margin_limit, max_attempts=max_attempts, mult_factor=mult_factor)    
+            hit.fetch_feature(self.full_record, margin_limit=margin_limit, max_attempts=max_attempts, mult_factor=mult_factor)
+            if hit.feature_found:
+                clean_hits.append(hit)
+        
+        #self.hits = clean_hits
 
     def purge_hits(self):
         '''
@@ -232,6 +237,8 @@ class GenomeFragment:
         #Check if the AnnotatedHit that is passed belongs with this fragment
         if a_hit.genome_fragment_name == self.name:
             self.hits.append(a_hit)
+        else:
+            print('Attempted to add a hit that does not belong to this fragment')
 
     def sort_hits(self):
         '''

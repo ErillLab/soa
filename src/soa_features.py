@@ -94,7 +94,7 @@ class AnnotatedHit(GenomeFeature):
         super().__init__(genome_accession=hit_accession, genome_fragment_name=genome_fragment_name, req_limit=req_limit, sleep_time=sleep_time, strand=self.strand)
         
         
-    def fetch_feature(self, record, margin_limit=20, max_attempts=5, mult_factor=3):
+    def fetch_feature(self, record, margin_limit=20, max_attempts=100, mult_factor=300):
         '''
         Determines the exact feature that corresponds to the alignment range in the genome. It will pull the entire annotated genome of the genome fragmet and search through
         all the features to determine which one contains the alignmet. It will than recalculate the percent identitiy by aligning the entire feature with the reference sequence. 
@@ -113,56 +113,8 @@ class AnnotatedHit(GenomeFeature):
         Returns
         -------
         None - the information is stored in the object
-
-        '''
-        '''
-        #####TESTING#####
-
-        try:
-            handle = Entrez.efetch(db="nuccore", id= self.genome_accession, strand=self.strand, seq_start=self.align_start, seq_stop=self.align_end, rettype='gbwithparts', retmode='XML')
-            record_1 = Entrez.read(handle, 'xml')
-        except:
-            print('error')
-
-        locus_id = ''
-        protein_id = ''
-
-        for feature in record_1[0]['GBSeq_feature-table']:
-            if feature['GBFeature_key'] == 'CDS':
-                for quality in feature['GBFeature_quals']:
-                    #Check for protein id
-                    if quality['GBQualifier_name'] == 'protein_id':
-                        protein_id = quality['GBQualifier_value']
-                    
-                    #Check for locus tag
-                    if quality['GBQualifier_name'] == 'locus_tag':
-                        locus_id = quality['GBQualifier_value']
-        
-        for feature in record[0]['GBSeq_feature-table']:
-                if feature['GBFeature_key'] == 'CDS':
-                    t_pid = ''
-                    t_lid = ''
-
-                    for quality in feature['GBFeature_quals']:
-                        if quality['GBQualifier_name'] == 'protein_id':
-                            t_pid = quality['GBQualifier_value']
-                        if quality['GBQualifier_name'] == 'locus_tag':
-                            t_lid = quality['GBQualifier_value']
-                            
-                    
-                    if t_lid == locus_id and t_pid == protein_id:
-                        self.locus_tag = t_lid
-                        self.protein_accession = t_pid
-                        self.feature_found = True
-                        self.coding_start = int(feature['GBFeature_intervals'][0]['GBInterval_from'])
-                        self.coding_end = int(feature['GBFeature_intervals'][0]['GBInterval_to'])
-                        self.five_end = min(self.coding_end, self.coding_start)
-                        self.three_end = max(self.coding_start, self.coding_end)
-
-
-
-        #################
         '''        
+
         #Set the 5' and 3' bounds of the alignment
         align_five_end = min(self.align_start, self.align_end)
         align_three_end = max(self.align_start, self.align_end)
@@ -185,7 +137,8 @@ class AnnotatedHit(GenomeFeature):
                         coding_end = max(int(feature['GBFeature_intervals'][0]['GBInterval_from']), int(feature['GBFeature_intervals'][0]['GBInterval_to']))
 
                         #Determining if feature is inclusive of the alignment. 
-                        if (abs(min(coding_start, coding_end) - align_five_end) < margin_limit) and (abs(max(coding_start, coding_end) - align_three_end) < margin_limit):
+                        #if (abs(min(coding_start, coding_end) - align_five_end) < margin_limit) and (abs(max(coding_start, coding_end) - align_three_end) < margin_limit):
+                        if (abs(min(coding_start, coding_end))-margin_limit <= align_five_end) and (abs(max(coding_start, coding_end)) + margin_limit >= align_three_end):
 
                             self.feature_found = True
 
@@ -236,7 +189,7 @@ class AnnotatedHit(GenomeFeature):
     def __str__(self):
 
         to_return = "ANNOTATED HIT\n"
-        to_return = to_return + "Alignment start = " + str(self.five_end) + " and Alignment end: " + str(self.three_end) + "; strand:" + self.strand + "\nOperon ID:" + self.operon_id 
+        to_return = to_return + "Alignment start = " + str(self.align_start) + " and Alignment end: " + str(self.align_end) + "; strand:" + self.strand + "\nOperon ID:" + self.operon_id  + "\nQuery Accession:" + self.query_accession + '\n' 
         to_return = to_return + super().__str__()
 
         return to_return
