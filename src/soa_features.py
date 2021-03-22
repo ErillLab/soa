@@ -203,7 +203,7 @@ class AnnotatedHit(GenomeFeature):
 
     def fetch_feature1(self, record, margin_limit=20, max_attempts=100, mult_factor=300):
         '''
-        Determines the exact feature that corresponds to the alignment range in the genome. It will pull the entire annotated genome f the genome fragmet and search through
+        Determines the exact feature that corresponds to the alignment range in the genome. It will pull the entire annotated genome of the genome fragmet and search through
         all the features to determine which one contains the alignmet. 
 
         Parameters
