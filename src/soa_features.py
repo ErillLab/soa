@@ -93,11 +93,118 @@ class AnnotatedHit(GenomeFeature):
 
         super().__init__(genome_accession=hit_accession, genome_fragment_name=genome_fragment_name, req_limit=req_limit, sleep_time=sleep_time, strand=self.strand)
         
+
+    def fetch_feature(self, record, coverage_cutoff=0.25):
+        '''
+        Determines the feature that corresponds to the alignment range in the genome by determining the feature that has the highest coverage over the alignment. It will pull the entire annotated genome of the genome fragmet and search through
+        all the features to determine which one contains the alignmet. 
+
+        Parameters
+        ----------
+        record: XML parsed object
+            The full genome record that this hit belongs to. 
+        coverage_cutoff: float
+            The minimum coverage needed between the alignment and the feature for them to be assigned. 
+
+        Returns
+        -------
+        None - the information is stored in the object
+        '''
+
+        #Set the 5' and 3' bounds of the alignment
+        align_five_end = min(self.align_start, self.align_end)
+        align_three_end = max(self.align_start, self.align_end)
+
+        #Max coverage value
+        max_coverage_val = -1
+
+        #Pulling all features from the Entrez results
+        for feature in record[0]['GBSeq_feature-table']:
+
+            if not feature['GBFeature_key'] == 'CDS':
+                continue
+            if not 'GBInterval_from' in feature['GBFeature_intervals'][0]:
+                continue
+
+            coding_start = min(int(feature['GBFeature_intervals'][0]['GBInterval_from']), int(feature['GBFeature_intervals'][0]['GBInterval_to']))
+            coding_end = max(int(feature['GBFeature_intervals'][0]['GBInterval_from']), int(feature['GBFeature_intervals'][0]['GBInterval_to']))
+
+            #Determine which is longer: the alignment or the feature, and pulling their start and end positions. 
+            long_start = int(align_five_end)
+            short_start = int(align_five_end)
+
+            long_end = int(align_three_end)
+            short_end = int(align_three_end)
+
+            if (align_three_end - align_five_end) > (coding_end - coding_start):
+                short_start = int(coding_start)
+                short_end = int(coding_end)
+            else:
+                long_start = int(coding_start)
+                long_end = int(coding_end)
+            
+            #The feature does not include any part of the feature (or the feature does not contain any part of the alignment), skip this feature
+            if short_end < long_start or short_start > long_end:
+                continue
+
+            #Calculate the coverage
+            feat_coverage = -1
+
+            #The coverage is 1 if the hit and feature line up exactly.            
+            #If the short one is completely included in the long one, the length of the short one divided by the length of the long one is the coverage. 
+            if short_start >= long_start and short_end <= long_end:
+                feat_coverage = (short_end - short_start) / (long_end - long_start)
+
+            #If the short one "overhangs" on the five prime end, the covered region is from the begining of the long one to end of the small one. 
+            elif short_start < long_start:
+                feat_coverage = (short_end - long_start) / (long_end - long_start)
+            
+            #If the short one "overhangs" on the three prime end, the covered region is from the beginning of the short one to the end of the long one
+            elif short_end > long_end:
+                feat_coverage = (long_end - short_start) / (long_end - long_start)
+            
+            if feat_coverage > max_coverage_val:
+                max_coverage_val = feat_coverage
+            
+            if feat_coverage > coverage_cutoff:
+                self.feature_found = True
+                self.coding_start = coding_start
+                self.coding_end = coding_end
+                
+                #Parse the protein ID, locus tag, and protein sequence from the feature table
+                for quality in feature['GBFeature_quals']:
+                    if quality['GBQualifier_name'] == 'protein_id':
+                        protein_accession = quality['GBQualifier_value']
+                        if protein_accession == None:
+                            self.protein_accession = "None"
+                        else:
+                            self.protein_accession = protein_accession
+
+                    if quality['GBQualifier_name'] == 'locus_tag':
+                        locus_tag = quality['GBQualifier_value']
+                        if locus_tag == None:
+                            self.locus_tag = "None"
+                        else:
+                            self.locus_tag = locus_tag
+                    
+                    if quality['GBQualifier_name'] == 'translation':
+                        sequence = quality['GBQualifier_value']
+                        if sequence == None:
+                            self.aa_sequence = 'None'
+                        else:
+                            self.aa_sequence = sequence
+
+                self.five_end = min(coding_end, coding_start) 
+                self.three_end = max(coding_start, coding_end)
+
+        if not self.feature_found:
+            print("Error: No feature found for\n " + str(self) + '\nCoverage value:' + str(max_coverage_val))
         
-    def fetch_feature(self, record, margin_limit=20, max_attempts=100, mult_factor=300):
+
+    def fetch_feature1(self, record, margin_limit=20, max_attempts=100, mult_factor=300):
         '''
         Determines the exact feature that corresponds to the alignment range in the genome. It will pull the entire annotated genome of the genome fragmet and search through
-        all the features to determine which one contains the alignmet. It will than recalculate the percent identitiy by aligning the entire feature with the reference sequence. 
+        all the features to determine which one contains the alignmet. 
 
         Parameters
         ----------

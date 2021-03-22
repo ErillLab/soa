@@ -186,11 +186,12 @@ class GenomeFragment:
         #Fetch the feature for each hit
         clean_hits = []
         for hit in self.hits:
-            hit.fetch_feature(self.full_record, margin_limit=margin_limit, max_attempts=max_attempts, mult_factor=mult_factor)
+            hit.fetch_feature(self.full_record)
+            #hit.fetch_feature1(self.full_record, margin_limit=margin_limit, max_attempts=max_attempts, mult_factor=mult_factor)
             if hit.feature_found:
                 clean_hits.append(hit)
         
-        #self.hits = clean_hits
+        self.hits = clean_hits
 
     def purge_hits(self):
         '''
