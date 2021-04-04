@@ -109,7 +109,6 @@ class OperonCluster:
         with open(output_file, 'w') as file:
             json.dump(data, file)
 
-
     def __str__(self):
         '''
         Overriden str()

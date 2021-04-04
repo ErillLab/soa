@@ -143,6 +143,26 @@ def ic_at(motif, other, offset):
 
     return amotif.pssm.mean()
 
+def calc_kld_distance(cola, colb):
+    '''
+    Calculates the KL distance between two columns of a pwm.
+
+    Parameters
+    ----------
+    cola, colb: [float]
+        Two columns A and B, repsectively, of a PWM. 
+
+    Returns
+    -------
+    distance: float
+        The calculated distance between the two columns. 
+    '''
+
+    safe_log2 = lambda x: math.log(x, 2) if x != 0 else 0.0
+    distance = (sum(cola[l] * safe_log2(cola[l] / colb[l]) for l in "ACTG") +
+            sum(colb[l] * safe_log2(colb[l] / cola[l]) for l in "ACTG"))
+    return distance
+
 def calc_euclidean(cola, colb):
     '''
     Calculates the euclidean distance between two columns of a pwm.
@@ -180,7 +200,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, offset=None, padded=True):
+def calculate_motif_distance(motif, other, offset=None, padded=True, distance_function=calc_euclidean):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -210,7 +230,7 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
         #print(pos, '\tcolA: ', [seq[pos] for seq in motif.instances])
         #print(pos, '\tcolB', [seq[pos+offset] for seq in other.instances])
 
-        dists.append(calc_euclidean(cola, colb))
+        dists.append(distance_function(cola, colb))
     
     if padded:
         #Add padded values for motif
@@ -222,7 +242,7 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
                 #print(pos, '\tpadded_1colA: ', [seq[pos] for seq in motif.instances])
                 #print(pos, '\tpadded_1colB', ' ATCG')
 
-                dists.append(calc_euclidean(cola, colb))
+                dists.append(distance_function(cola, colb))
         
         #Add padded values for other
         for pos in range(len(other) - 1):
@@ -233,7 +253,7 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
                 #print(pos, '\tpadded_2colA: ', 'ATCG')
                 #print(pos, '\tpadded_2colB', [seq[pos] for seq in other.instances])
 
-                dists.append(calc_euclidean(cola, colb))
+                dists.append(distance_function(cola, colb))
 
     
     

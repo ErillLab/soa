@@ -29,9 +29,13 @@ from Bio.motifs import meme, Motif, Instances
 from Bio import motifs
 
 #Path to CLSTR4 meme output
-meme_results = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1294_meme_out/meme.xml'
+meme_results = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR4_meme_out/meme.xml'
 
 with open(meme_results, 'r') as f:
-    records = meme.read(f)
+    try:
+      records = meme.read(f)
+    except:
+      print('error')
+  
+print('made it')
     
-print(str(records[0].instances).split('\n'))
