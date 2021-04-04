@@ -60,11 +60,11 @@ def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open
         
         #Return the average percent matches
 
-        if len(percent_matches) <= 0:
-            return 0
+    if len(percent_matches) <= 0:
+        return 0
 
-        average_percent_matches = sum(percent_matches)/len(percent_matches)
-        return average_percent_matches
+    average_percent_matches = sum(percent_matches)/len(percent_matches)
+    return average_percent_matches
 
 
 def get_centroid(sequences):

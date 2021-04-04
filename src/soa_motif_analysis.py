@@ -64,18 +64,21 @@ def get_motifs(meme_data_dir, e_val_threshold):
     '''
 
     #List of Motif objects that met the threshold
-    motifs = []
+    motifs_in_record = []
 
     #Pull all of the records from the MEME output file
     with open(meme_data_dir + 'meme.xml') as f:
-        records = meme.read(f)
+        try:
+            records = meme.read(f)
+        except:
+            print('Error with parsing MEME output.')
     
     #Pull out motifs that meet the e value threhold
     for motif in records:
         if motif.evalue <= e_val_threshold:
-            motifs.append(motif)
+            motifs_in_record.append(motif)
     
-    return motifs 
+    return motifs_in_record 
 
 
 ################## Functions below are all collectively used to calculate the distance between two motifs. ###################
@@ -133,10 +136,10 @@ def ic_at(motif, other, offset):
     amotif = Motif(instances=Instances(motif_seqs+other_seqs))
     amotif.pseudocounts = dict(A=0.25, C=0.25, G=0.25, T=0.25)
 
-    print('Motif Seqs: ' , motif_seqs)
-    print('Other Seqs: ' , other_seqs)
-    print('Offset ', offset)
-    print('IC: ' , amotif.pssm.mean(), '\n\n')
+    #print('Motif Seqs: ' , motif_seqs)
+    #print('Other Seqs: ' , other_seqs)
+    #print('Offset ', offset)
+    #print('IC: ' , amotif.pssm.mean(), '\n\n')
 
     return amotif.pssm.mean()
 
@@ -204,8 +207,8 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
         cola = pwm_col(motif.pwm, pos)
         colb = pwm_col(other.pwm, pos+offset)
 
-        print(pos, '\tcolA: ', [seq[pos] for seq in motif.instances])
-        print(pos, '\tcolB', [seq[pos+offset] for seq in other.instances])
+        #print(pos, '\tcolA: ', [seq[pos] for seq in motif.instances])
+        #print(pos, '\tcolB', [seq[pos+offset] for seq in other.instances])
 
         dists.append(calc_euclidean(cola, colb))
     
@@ -216,8 +219,8 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
                 cola = pwm_col(motif.pwm, pos)
                 colb = {'A': 0.25, 'C': 0.25, 'T': 0.25, 'G': 0.25}
 
-                print(pos, '\tpadded_1colA: ', [seq[pos] for seq in motif.instances])
-                print(pos, '\tpadded_1colB', ' ATCG')
+                #print(pos, '\tpadded_1colA: ', [seq[pos] for seq in motif.instances])
+                #print(pos, '\tpadded_1colB', ' ATCG')
 
                 dists.append(calc_euclidean(cola, colb))
         
@@ -227,8 +230,8 @@ def calculate_motif_distance(motif, other, offset=None, padded=True):
                 cola = {'A': 0.25, 'C': 0.25, 'T': 0.25, 'G': 0.25}
                 colb = pwm_col(other.pwm, pos)
 
-                print(pos, '\tpadded_2colA: ', 'ATCG')
-                print(pos, '\tpadded_2colB', [seq[pos] for seq in other.instances])
+                #print(pos, '\tpadded_2colA: ', 'ATCG')
+                #print(pos, '\tpadded_2colB', [seq[pos] for seq in other.instances])
 
                 dists.append(calc_euclidean(cola, colb))
 

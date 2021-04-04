@@ -9,6 +9,7 @@ from Bio.Seq import Seq
 from soa_operon import Operon
 from soa_sim_filter import sim_filter
 from tqdm import tqdm
+import json
 
 
 class OperonCluster:
@@ -72,6 +73,42 @@ class OperonCluster:
         
         #Write all sequences to file
         SeqIO.write(to_write, output_file, 'fasta')
+    
+    def export_to_json(self, output_file):
+        '''
+        Exports all the information for this cluster into a json file.
+
+        Parameters
+        ----------
+        output_file: str
+            The JSON file to write this cluster to.
+        
+        Returns
+        -------
+        None
+        '''
+
+        #A dictionary holding all of the data for this cluster
+        data = {
+            "cluster_id":self.cluster_id,
+
+            "operons":[{
+
+                "operon_id":op.operon_id,
+                "cluster_id":op.cluster_id,
+                "genome_accession":op.genome_accession,
+                "features":[feat.protein_accession for feat in op.features],
+                "promoter":op.promoter
+
+            } for op in self.operons],
+
+            "filtered_promoters":self.filtered_promoters,
+            "motifs":[str(m.instances).split('\n')[:-1] for m in self.motifs]
+        }
+
+        with open(output_file, 'w') as file:
+            json.dump(data, file)
+
 
     def __str__(self):
         '''

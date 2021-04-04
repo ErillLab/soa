@@ -605,6 +605,8 @@ def soa():
         
         #Fetch the promoters for all the operons
         tqdm.write('----- Fetching operon promoters')
+
+        #Sort the operons into clusters
         frag.get_promoters()
         for operon in frag.operons:
             
@@ -656,9 +658,10 @@ def soa():
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
     for c in operon_clusters:
-        cluster_file_name = '../output/complete_clusters/{cluster_id}.p'
-        pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id), 'wb'))
-        print(c)
+        cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
+        c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
+        #pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id), 'wb'))
+        #print(c)
         print('~'*15)
         
 
