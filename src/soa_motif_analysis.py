@@ -159,8 +159,8 @@ def calc_kld_distance(cola, colb):
     '''
 
     safe_log2 = lambda x: math.log(x, 2) if x != 0 else 0.0
-    distance = (sum(cola[l] * safe_log2(cola[l] / colb[l]) for l in "ACTG") +
-            sum(colb[l] * safe_log2(colb[l] / cola[l]) for l in "ACTG"))
+    distance = (sum(cola[l] * safe_log2(cola[l] / colb[l]) for l in "ACTG" if colb[l] != 0) + 
+            sum(colb[l] * safe_log2(colb[l] / cola[l]) for l in "ACTG" if cola[l] != 0))
     return distance
 
 def calc_euclidean(cola, colb):
@@ -218,7 +218,7 @@ def calculate_motif_distance(motif, other, offset=None, padded=True, distance_fu
     if offset is None:
         offset = get_alignment_offset(motif, other)
     if offset < 0:
-        return calculate_motif_distance(other, motif, -1*offset, padded=padded)
+        return calculate_motif_distance(other, motif, -1*offset, padded=padded, distance_function=distance_function)
 
     dists = []
     alignment_length = min(len(motif), len(other)-offset)

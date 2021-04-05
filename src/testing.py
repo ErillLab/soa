@@ -5,7 +5,7 @@ A testing module to test other modules.
 '''
 
 import soa_sim_filter
-from soa_motif_analysis import  calculate_motif_distance, get_motifs
+from soa_motif_analysis import  *
 from Bio.motifs import Motif, Instances
 
 
@@ -25,7 +25,7 @@ records_2 = get_motifs(test_meme_output_2, 100)
 motif_a = records_1[0]
 motif_b = records_2[0]
 
-print(calculate_motif_distance(motif_a, motif_b, padded=True))
+print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance))
 
 '''
 print(motif_a.instances[0])
