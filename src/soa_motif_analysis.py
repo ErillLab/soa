@@ -11,7 +11,8 @@ from Bio import motifs
 import os
 import math
 import itertools
-
+import statistics
+from soa_operon_cluster import OperonCluster
 
 
 def run_meme(input_file, output_dir, num_motifs=5, width_min=10, width_max=26, mode='anr', pal=False, meme_exec_path='/Users/ichaudr/Documents/UMBC/Lab-Erill/meme-5.3.0/src/meme'):
@@ -160,7 +161,6 @@ def calc_kld_distance(cola, colb):
     distance: float
         The calculated distance between the two columns. 
     '''
-
     safe_log2 = lambda x: math.log(x, 2) if x != 0 else 0.0
     distance = (sum(cola[l] * safe_log2(cola[l] / colb[l]) for l in "ACTG" if colb[l] != 0) + 
             sum(colb[l] * safe_log2(colb[l] / cola[l]) for l in "ACTG" if cola[l] != 0))
@@ -203,7 +203,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, offset=None, padded=True, distance_function=calc_euclidean):
+def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -221,7 +221,7 @@ def calculate_motif_distance(motif, other, offset=None, padded=True, distance_fu
     if offset is None:
         offset = get_alignment_offset(motif, other)
     if offset < 0:
-        return calculate_motif_distance(other, motif, -1*offset, padded=padded, distance_function=distance_function)
+        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded)
 
     dists = []
     alignment_length = min(len(motif), len(other)-offset)
@@ -536,7 +536,7 @@ def write_to_edge_file(file_handle, cluster_one, cluster_two, value):
     file_handle.write(value)
     file_handle.write('\n')
 
-def write_to_csv(operon_clusters):
+def write_to_csv(filename, operon_clusters, distance_calc):
     '''
     Creates and writes edge and node csv files
 
@@ -551,23 +551,21 @@ def write_to_csv(operon_clusters):
     '''
 
     # Create file objects for various distance calculation methods (for edge csv files)
-    edges_output_file_average = open("edges_average.csv", "w")
+    edges_output_file_average = open(filename + "_edges_average.csv", "w")
+    edges_output_file_median = open(filename + "_edges_median.csv", "w")
+    edges_output_file_minimum = open(filename + "_edges_minimum.csv", "w")
+    edges_output_file_maximum = open(filename + "_edges_maximum.csv", "w")
+    edges_output_file_noise_reduction = open(filename + "_edges_noise_reduction.csv", "w")
+    
+    #  Write headers to be recognized in Gephi
     edges_output_file_average.write("Source,Target,Weight\n")
-
-    edges_output_file_median = open("edges_median.csv", "w")
     edges_output_file_median.write("Source,Target,Weight\n")
-
-    edges_output_file_minimum = open("edges_minimum.csv", "w")
     edges_output_file_minimum.write("Source,Target,Weight\n")
-
-    edges_output_file_maximum = open("edges_maximum.csv", "w")
     edges_output_file_maximum.write("Source,Target,Weight\n")
-
-    edges_output_file_noise_reduction = open("edges_noise_reduction.csv", "w")
     edges_output_file_noise_reduction.write("Source,Target,Weight\n")
 
     # Create file oject for node csv file
-    nodes_output_file = open("nodes.csv", "w")
+    nodes_output_file = open(filename + "_nodes.csv", "w")
     nodes_output_file.write("Id,Label\n")
 
     for i in range(0,len(operon_clusters)):
@@ -584,7 +582,6 @@ def write_to_csv(operon_clusters):
                 # Hold all pairwise distances and minimum distances
                 pairwise_distances = []
                 minimum_distances = []
-
                 # Identify the operon with fewer motifs
                 # Always search for the minimum distance between a motif from the operon with the 
                 # fewer amount of motifs and all of the motifs of the operon with the larger amount
@@ -600,11 +597,11 @@ def write_to_csv(operon_clusters):
                 for k in range(0, len(operon_fewer_motifs)):
                     # Set initial minimum value 
                     if (len(operon_more_motifs) > 0):
-                        min_val = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[0])
+                        min_val = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[0], distance_calc)
                     
                     for l in range(0, len(operon_more_motifs)):
-                        distance_between_motifs = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[l])
-                        print("fewer: (",len(operon_fewer_motifs),") ",k, " more: (",len(operon_more_motifs),") ", l, " distance: ", distance_between_motifs)
+                        distance_between_motifs = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[l], distance_calc)
+                        #print("fewer: (",len(operon_fewer_motifs),") ",k, " more: (",len(operon_more_motifs),") ", l, " distance: ", distance_between_motifs)
                         pairwise_distances.append(distance_between_motifs)
 
                         # If found new minimum, set min_val as new minimum value
@@ -614,11 +611,10 @@ def write_to_csv(operon_clusters):
                         # If last comparison, add min_val to minimum_distances array
                         if (l == len(operon_more_motifs)-1):
                             minimum_distances.append(min_val)
-                            print("min_val: ", min_val)
+                            #print("min_val: ", min_val)
                         
                 # If minimum distances for noise reduction were calculated
                 if (len(minimum_distances) > 0):
-                    print(sum(minimum_distances)/len(minimum_distances))
                     write_to_edge_file(edges_output_file_noise_reduction,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(minimum_distances)/len(minimum_distances)))
 
                 # if pairwise_distances were calculated, write average, median, min, and max values to csv filie
@@ -627,7 +623,7 @@ def write_to_csv(operon_clusters):
                     write_to_edge_file(edges_output_file_median,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(statistics.median(pairwise_distances)))
                     write_to_edge_file(edges_output_file_minimum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(min(pairwise_distances)))
                     write_to_edge_file(edges_output_file_maximum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(max(pairwise_distances)))
-                    #print(i, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
+                    print(i+1, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
 
     # close all output files
     edges_output_file_average.close()
@@ -638,5 +634,6 @@ def write_to_csv(operon_clusters):
     nodes_output_file.close()
 
 if __name__ == "__main__":
+    distance_calc = calc_euclidean
     all_clusters = get_operon_clusters()
-    write_to_csv(all_clusters)
+    write_to_csv(all_clusters, distance_function=distance_calc)
