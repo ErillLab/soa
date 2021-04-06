@@ -9,7 +9,7 @@ from soa_motif_analysis import  *
 from Bio.motifs import Motif, Instances
 
 
-test_meme_output_1 = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1039_meme_out/'
+test_meme_output_1 = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR713_meme_out/'
 test_meme_output_2 = '/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/issac-workspace-IE/soa/meme_bin/CLSTR1708_meme_out/'
 
 records_1 = get_motifs(test_meme_output_1, 100)
@@ -24,6 +24,12 @@ records_2 = get_motifs(test_meme_output_2, 100)
 
 motif_a = records_1[0]
 motif_b = records_2[0]
+
+
+
+
+motif_a = Motif(instances=Instances('ATAAGCCACTACACCCCATAA'))
+motif_a = Motif(instances=Instances('ATAATCCACTACACCCCATAA'))
 
 print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance))
 

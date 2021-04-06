@@ -73,6 +73,9 @@ def get_motifs(meme_data_dir, e_val_threshold):
         except:
             print('Error with parsing MEME output.')
     
+    if len(records) == 0:
+        return motifs_in_record
+    
     #Pull out motifs that meet the e value threhold
     for motif in records:
         if motif.evalue <= e_val_threshold:
