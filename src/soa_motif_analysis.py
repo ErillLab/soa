@@ -634,6 +634,9 @@ def write_to_csv(filename, operon_clusters, distance_calc):
     nodes_output_file.close()
 
 if __name__ == "__main__":
+    # Set distance calc type
     distance_calc = calc_euclidean
     all_clusters = get_operon_clusters()
-    write_to_csv(all_clusters, distance_function=distance_calc)
+    # Set filename to be appended to _method_edges.csv and _nodes.csv
+    filename = "sample"
+    write_to_csv(filename, all_clusters, distance_calc)
