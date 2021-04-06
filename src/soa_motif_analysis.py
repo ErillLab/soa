@@ -262,52 +262,155 @@ def calculate_motif_distance(motif, other, offset=None, padded=True, distance_fu
     
     return sum(dists) / len(dists)
 
-
-    ################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
+################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
+# Approach:
+# 1. Splice a given motif into kmers of a given length (i.e. 4).
+# 2. Keep only the kmers with a high information content (filter out kmers that are noise).
+# 3. Align kmers in all possible combinations and score each alignment.
 
 def build_motif(sites):
-    """Builds a Biopython motifs.Motif object out of given sites."""
+    '''
+    Builds a Biopython motifs.Motif object out of given sites.
+
+    Parameters
+    ----------
+    sites
+        A list of sequences that make up the motif
+    
+    Returns
+    -------
+    motif: motifs object
+        The motif object created from sites 
+    '''
     motif = motifs.create(sites)
     motif.pseudocounts = 0.8   # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2647310/
     return motif
 
 
 def slice_sites(sites, start, end):
-    """Slices each site."""
-    return [site[start:end] for site in sites]
+    '''
+    Slices each site in sites[]
+
+    Parameters
+    ----------
+    sites: [string]
+        The list of sites (sequences) that make up a motif 
+    start: int
+        The index to begin splicing
+    end: int
+        The index to end splicing
+
+    Returns
+    -------
+    spliced_sites: [string]
+        The list of sites (sequences) spliced from start"end
+    '''
+    spliced_sites = [site[start:end] for site in sites]
+    return spliced_sites
 
 
 def score_site(pssm, site):
-    """Scores the given site with the given PSSM."""
-    return sum(pssm[site[i]][i] for i in range(len(site)))
+    '''
+    Scores the given site with the given PSSM.
+
+    Parameters
+    ----------
+    site: string
+        sequence that is being scored with the given pssm (the pssm is not necessarily the site's pssm)
+    pssm: [[float]]
+        pssm that will be used to score site 
+
+    Returns
+    -------
+    score: float
+        The score of the site using the given pssm 
+    '''
+    score = sum(pssm[site[i]][i] for i in range(len(site)))
+    return score
 
 
 def score_sites(pssm, sites):
-    """Computes the average PSSM score of a list of sites."""
-    return sum(score_site(pssm, site) for site in sites) / len(sites)
+    '''
+    Computes the average score of the sites[] passed in by score each site with the given pssm
+    and then taking the average of all of the scores
+
+    Parameters
+    ----------
+    sites: [string]
+        sequences that are being scored with the given pssm (the pssm is not necessarily the sites' pssm)
+    pssm: [[float]]
+        pssm that will be used to score sites 
+
+    Returns
+    -------
+    score: float
+        The average score of each site in sites using the given pssm 
+    '''
+    average_score = sum(score_site(pssm, site) for site in sites) / len(sites)
+    return average_score
 
 
 def direct_repeat(seq):
-    """Match for a sequence in a direct-repeat pattern."""
+    '''
+    Returns the direct-repeat of the sequence passed in.
+
+    Parameters
+    ----------
+    seq: string
+        The seqence to be matched to a direct repeat pattern
+
+    Returns
+    -------
+    seq: string
+        The seqence matched to a direct repeat pattern
+    '''
     return seq
 
 
 def inverted_repeat(seq):
-    """Match for a sequence in an inverted-repeat pattern."""
+    '''
+    Returns the inverted-repeat of the sequence passed in.
+
+    Parameters
+    ----------
+    seq: string
+        The seqence to be matched to a inverted repeat pattern
+
+    Returns
+    -------
+    seq: string
+        The seqence matched to an inverted repeat pattern
+    '''
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     return ''.join(complement[b] for b in seq[::-1])
 
 
-def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
+def find_pattern(sites, self_score_ratio_threshold=0.6,
                  kmer_pair_score_ratio_threshold=0.3):
-    """Finds pattern in a motif."""
+    '''
+    Returns a boolean indicating whether a direct or inverted repeat pattern was found in a given motif
+
+    Parameters
+    ----------
+    sites: [string]
+        The sequences making up the motif
+    self_score_ratio_threshold: float
+        A threshold value to determine whether a score indicates a repeat
+    kmer_pair_score_ratio_threshold: float
+        A threshold value to keep only the kmers with a high information content
+
+    Returns
+    -------
+    found_repeat: boolean
+        Indicates whether a direct or inverted repeat was found
+    '''
+    # Splices all sites of a given motif into different sub-sequences (or k-mers) of size k
     k = 4
     sites_len = len(sites[0])
-    # Splices all sites into different sub-sequences (or k-mers) of size k
     all_kmers = [{'start': i, 'end': i+k, 'seqs': slice_sites(sites, i, i+k)}
                  for i in range(sites_len-k+1)]
 
-    # Compute self-PSSM scores of the k-mers
+    # Compute self-PSSM score of each k-mer
     for kmer in all_kmers:
         motif = build_motif(kmer['seqs'])
         kmer['pssm'] = motif.pssm
@@ -315,13 +418,16 @@ def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
 
     # Find the highest self-PSSM score of all the k-mers
     max_self_score = max(kmer['self_score'] for kmer in all_kmers)
-    # Keep only the k-mers with self_score values > self_score_ratio_threshold*max_self_score
+    # Keep only the k-mers with self_score values > self_score_ratio_threshold * max_self_score
     all_kmers = [kmer for kmer in all_kmers
                  if kmer['self_score'] > self_score_ratio_threshold*max_self_score]
 
     # Pattern is a tuple containing ('Type of repeat', score, start index, end index)
-    # Set pattern to SB (single box) by default
+    # Set pattern to SB (single box) and found_repeat to False by default
     pattern = ('SB',0 , 0, 0)
+    found_repeat = False
+
+    # Algin kmers in all possible combinations
     for kmer_a, kmer_b in itertools.combinations(all_kmers, 2):
         if not (kmer_a['start'] >= kmer_b['end'] or kmer_b['start'] >= kmer_a['end']):
             continue
@@ -329,15 +435,18 @@ def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
         if kmer_a['self_score'] < kmer_b['self_score']:
             kmer_a, kmer_b = kmer_b, kmer_a
 
-        # Look for direct-repeat
+        # Look for a direct 
+        # Score kmerB using the pssm of kmerA, if the score > threshold, a repeat has been found
         score = score_sites(kmer_a['pssm'], kmer_b['seqs'])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('DR', score, kmer_a['start'], kmer_b['start'])
+            found_repeat = True
 
         # Look for inverted-repeat
         score = score_sites(
             kmer_a['pssm'], [inverted_repeat(site) for site in kmer_b['seqs']])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('IR', score, kmer_a['start'], kmer_b['start'])
+            found_repeat = True
 
-    return pattern
+    return found_repeat
