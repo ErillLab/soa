@@ -654,7 +654,7 @@ def soa():
         in_file = promoter_out_dir.format(id=cluster.cluster_id)
         out_dir = meme_out_dir.format(id=cluster.cluster_id)
 
-        run_meme(input_file=in_file, output_dir=out_dir)
+        run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path)
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
     for c in operon_clusters:
