@@ -639,9 +639,21 @@ def soa():
         tqdm.write('__________'*10)
         frag.clean()
 
-
+    
     #Filter promoters for each operon cluster
     for cluster in tqdm(operon_clusters, desc='Filtering promoters'):
+
+        #If the promoters are already filtered and written to the file, load them instead of refiltering
+        if os.path.isfile(promoter_out_dir.format(id=cluster.cluster_id)):
+            tqdm.write('Reading in saved promoters for ' + cluster.cluster_id)
+            temp = []
+            for record in SeqIO.parse(open(promoter_out_dir.format(id=cluster.cluster_id), 'r'), 'fasta'):
+                temp.append(str(record.seq))
+            
+            cluster.filtered_promoters = temp 
+            continue
+
+
         tqdm.write('Filtering ' + cluster.cluster_id)
         cluster.filter_promoters(threhold_percent_id=max_seq_sim)
         cluster.write_promoters(output_file=promoter_out_dir.format(id=cluster.cluster_id))
