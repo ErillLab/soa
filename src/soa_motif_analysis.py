@@ -262,52 +262,155 @@ def calculate_motif_distance(motif, other, offset=None, padded=True, distance_fu
     
     return sum(dists) / len(dists)
 
-
-    ################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
+################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
+# Approach:
+# 1. Splice a given motif into kmers of a given length (i.e. 4).
+# 2. Keep only the kmers with a high information content (filter out kmers that are noise).
+# 3. Align kmers in all possible combinations and score each alignment.
 
 def build_motif(sites):
-    """Builds a Biopython motifs.Motif object out of given sites."""
+    '''
+    Builds a Biopython motifs.Motif object out of given sites.
+
+    Parameters
+    ----------
+    sites
+        A list of sequences that make up the motif
+    
+    Returns
+    -------
+    motif: motifs object
+        The motif object created from sites 
+    '''
     motif = motifs.create(sites)
     motif.pseudocounts = 0.8   # http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2647310/
     return motif
 
 
 def slice_sites(sites, start, end):
-    """Slices each site."""
-    return [site[start:end] for site in sites]
+    '''
+    Slices each site in sites[]
+
+    Parameters
+    ----------
+    sites: [string]
+        The list of sites (sequences) that make up a motif 
+    start: int
+        The index to begin splicing
+    end: int
+        The index to end splicing
+
+    Returns
+    -------
+    spliced_sites: [string]
+        The list of sites (sequences) spliced from start"end
+    '''
+    spliced_sites = [site[start:end] for site in sites]
+    return spliced_sites
 
 
 def score_site(pssm, site):
-    """Scores the given site with the given PSSM."""
-    return sum(pssm[site[i]][i] for i in range(len(site)))
+    '''
+    Scores the given site with the given PSSM.
+
+    Parameters
+    ----------
+    site: string
+        sequence that is being scored with the given pssm (the pssm is not necessarily the site's pssm)
+    pssm: [[float]]
+        pssm that will be used to score site 
+
+    Returns
+    -------
+    score: float
+        The score of the site using the given pssm 
+    '''
+    score = sum(pssm[site[i]][i] for i in range(len(site)))
+    return score
 
 
 def score_sites(pssm, sites):
-    """Computes the average PSSM score of a list of sites."""
-    return sum(score_site(pssm, site) for site in sites) / len(sites)
+    '''
+    Computes the average score of the sites[] passed in by score each site with the given pssm
+    and then taking the average of all of the scores
+
+    Parameters
+    ----------
+    sites: [string]
+        sequences that are being scored with the given pssm (the pssm is not necessarily the sites' pssm)
+    pssm: [[float]]
+        pssm that will be used to score sites 
+
+    Returns
+    -------
+    score: float
+        The average score of each site in sites using the given pssm 
+    '''
+    average_score = sum(score_site(pssm, site) for site in sites) / len(sites)
+    return average_score
 
 
 def direct_repeat(seq):
-    """Match for a sequence in a direct-repeat pattern."""
+    '''
+    Returns the direct-repeat of the sequence passed in.
+
+    Parameters
+    ----------
+    seq: string
+        The seqence to be matched to a direct repeat pattern
+
+    Returns
+    -------
+    seq: string
+        The seqence matched to a direct repeat pattern
+    '''
     return seq
 
 
 def inverted_repeat(seq):
-    """Match for a sequence in an inverted-repeat pattern."""
+    '''
+    Returns the inverted-repeat of the sequence passed in.
+
+    Parameters
+    ----------
+    seq: string
+        The seqence to be matched to a inverted repeat pattern
+
+    Returns
+    -------
+    seq: string
+        The seqence matched to an inverted repeat pattern
+    '''
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     return ''.join(complement[b] for b in seq[::-1])
 
 
-def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
+def find_pattern(sites, self_score_ratio_threshold=0.6,
                  kmer_pair_score_ratio_threshold=0.3):
-    """Finds pattern in a motif."""
+    '''
+    Returns a boolean indicating whether a direct or inverted repeat pattern was found in a given motif
+
+    Parameters
+    ----------
+    sites: [string]
+        The sequences making up the motif
+    self_score_ratio_threshold: float
+        A threshold value to determine whether a score indicates a repeat
+    kmer_pair_score_ratio_threshold: float
+        A threshold value to keep only the kmers with a high information content
+
+    Returns
+    -------
+    found_repeat: boolean
+        Indicates whether a direct or inverted repeat was found
+    '''
+    # Splices all sites of a given motif into different sub-sequences (or k-mers) of size k
     k = 4
     sites_len = len(sites[0])
-    # Splices all sites into different sub-sequences (or k-mers) of size k
     all_kmers = [{'start': i, 'end': i+k, 'seqs': slice_sites(sites, i, i+k)}
                  for i in range(sites_len-k+1)]
 
-    # Compute self-PSSM scores of the k-mers
+    # Compute self-PSSM score of each k-mer
     for kmer in all_kmers:
         motif = build_motif(kmer['seqs'])
         kmer['pssm'] = motif.pssm
@@ -315,13 +418,16 @@ def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
 
     # Find the highest self-PSSM score of all the k-mers
     max_self_score = max(kmer['self_score'] for kmer in all_kmers)
-    # Keep only the k-mers with self_score values > self_score_ratio_threshold*max_self_score
+    # Keep only the k-mers with self_score values > self_score_ratio_threshold * max_self_score
     all_kmers = [kmer for kmer in all_kmers
                  if kmer['self_score'] > self_score_ratio_threshold*max_self_score]
 
     # Pattern is a tuple containing ('Type of repeat', score, start index, end index)
-    # Set pattern to SB (single box) by default
+    # Set pattern to SB (single box) and found_repeat to False by default
     pattern = ('SB',0 , 0, 0)
+    found_repeat = False
+
+    # Algin kmers in all possible combinations
     for kmer_a, kmer_b in itertools.combinations(all_kmers, 2):
         if not (kmer_a['start'] >= kmer_b['end'] or kmer_b['start'] >= kmer_a['end']):
             continue
@@ -329,15 +435,208 @@ def find_pattern(motif, sites, self_score_ratio_threshold=0.6,
         if kmer_a['self_score'] < kmer_b['self_score']:
             kmer_a, kmer_b = kmer_b, kmer_a
 
-        # Look for direct-repeat
+        # Look for a direct 
+        # Score kmerB using the pssm of kmerA, if the score > threshold, a repeat has been found
         score = score_sites(kmer_a['pssm'], kmer_b['seqs'])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('DR', score, kmer_a['start'], kmer_b['start'])
+            found_repeat = True
 
         # Look for inverted-repeat
         score = score_sites(
             kmer_a['pssm'], [inverted_repeat(site) for site in kmer_b['seqs']])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('IR', score, kmer_a['start'], kmer_b['start'])
+            found_repeat = True
 
-    return pattern
+    return found_repeat
+
+################## Functions below are used to create csv files containing edges and nodes for a Gephi network. ###################
+# Approach:
+# 1. Filter motifs returned by MEME, keeping only those with direct and inverted repeats.
+# 2. Calculate the KLD distances between each motif in two given operons, and report the distance between two operons as the:
+#       a. average of all the distances between all motifs in both operons
+#       b. minimum of all the distances between all motifs in both operons
+#       c. maximum of all the distances between all motifs in both operons
+#       d. median of all the distances between all motifs in both operons
+#       e. noise reduction distance calculation
+#           The operon with fewer motifs is Operon A, and the other is Operon B. For each motif in Operon A, 
+#           find the motif in Operon B for which the motif in Operon A has the smallest distance. Then, take
+#           the average of these minimum distances to calculate the distance between the operons
+# 3. Write to nodes and edges csv files for each different distance calculation
+
+def get_operon_clusters():
+    '''
+    Parses the meme_bin folder and creates operon_cluster objects for each cluster directory
+
+    Parameters
+    ----------
+    None
+    
+    Returns
+    -------
+    operon_clusters:[operon_cluster] 
+        An array holding operon_cluster objects for each cluster in meme_bin
+    '''
+
+    # An array of operon cluster objects
+    operon_clusters = []
+
+    # Get the file path for meme_bin
+    local_path = os.path.dirname(os.getcwd())
+    clusters_path = local_path + '/meme_bin/'
+
+    # The maximum e-value for any motif that is returned by get_motifs()
+    motif_e_val_threshold = 10E-3
+
+    # Traverse the meme_bin directory, create operon_cluster objects and set their motifs after filtering for repeats
+    for cluster_dir in os.listdir(clusters_path):
+        if(cluster_dir[0:5] == "CLSTR"):
+            print(cluster_dir)
+            # Create operon cluster object, get operon ID from file name
+            new_cluster = OperonCluster(cluster_id = cluster_dir.split("_")[0][5:])
+            # Get all motifs associated with the cluster
+            cluster_motifs =  get_motifs(meme_data_dir = clusters_path + cluster_dir + '/', e_val_threshold=motif_e_val_threshold)
+
+            # Keep only the motifs with direct or inverted repeats
+            motifs_with_repeats = []
+            for motif in cluster_motifs:
+                if (find_pattern(motif.instances)):
+                    motifs_with_repeats.append(motif)
+            new_cluster.motifs = motifs_with_repeats
+            
+            # Add new_cluster object to the operon_clusters[] array
+            operon_clusters.append(new_cluster)
+
+    return operon_clusters
+
+def write_to_edge_file(file_handle, cluster_one, cluster_two, value):
+    '''
+    Writes cluster_one, cluster_two, edge_value to edge csv file
+
+    Parameters
+    ----------
+    file_handle: fileObj
+        The file that is being written to
+
+    cluster_one, cluster_two: string
+        The ID's of the two clusters who's distances are being calculated
+    
+    value: float
+        The value being written to the csv file for the edge (average, median, min, or max)
+    
+    Returns
+    -------
+    None - the file is written to by the file handles
+    '''
+    file_handle.write(cluster_one)
+    file_handle.write(',')
+    file_handle.write(cluster_two)
+    file_handle.write(',')
+    file_handle.write(value)
+    file_handle.write('\n')
+
+def write_to_csv(operon_clusters):
+    '''
+    Creates and writes edge and node csv files
+
+    Parameters
+    ----------
+    operon_clusters:[operon_cluster] 
+        An array holding operon_cluster objects for each cluster in meme_bin
+
+    Returns
+    -------
+    None - writes distance and node information to csv files
+    '''
+
+    # Create file objects for various distance calculation methods (for edge csv files)
+    edges_output_file_average = open("edges_average.csv", "w")
+    edges_output_file_average.write("Source,Target,Weight\n")
+
+    edges_output_file_median = open("edges_median.csv", "w")
+    edges_output_file_median.write("Source,Target,Weight\n")
+
+    edges_output_file_minimum = open("edges_minimum.csv", "w")
+    edges_output_file_minimum.write("Source,Target,Weight\n")
+
+    edges_output_file_maximum = open("edges_maximum.csv", "w")
+    edges_output_file_maximum.write("Source,Target,Weight\n")
+
+    edges_output_file_noise_reduction = open("edges_noise_reduction.csv", "w")
+    edges_output_file_noise_reduction.write("Source,Target,Weight\n")
+
+    # Create file oject for node csv file
+    nodes_output_file = open("nodes.csv", "w")
+    nodes_output_file.write("Id,Label\n")
+
+    for i in range(0,len(operon_clusters)):
+        # Create a node for every cluster in nodes.csv
+        nodes_output_file.write(operon_clusters[i].cluster_id)
+        nodes_output_file.write(',')
+        nodes_output_file.write(operon_clusters[i].cluster_id)
+        nodes_output_file.write("\n")
+
+        # Compare the motifs of each cluster with the motifs of the other cluster
+        for j in range(i,len(operon_clusters)):
+            # Don't compare a cluster with itself
+            if (i != j):
+                # Hold all pairwise distances and minimum distances
+                pairwise_distances = []
+                minimum_distances = []
+
+                # Identify the operon with fewer motifs
+                # Always search for the minimum distance between a motif from the operon with the 
+                # fewer amount of motifs and all of the motifs of the operon with the larger amount
+                # of motifs (noise reduction)
+                if(len(operon_clusters[i].motifs) <= len(operon_clusters[j].motifs)):
+                    operon_fewer_motifs = operon_clusters[i].motifs
+                    operon_more_motifs = operon_clusters[j].motifs
+                else:
+                    operon_fewer_motifs = operon_clusters[j].motifs
+                    operon_more_motifs = operon_clusters[i].motifs
+
+                # Compare all of the motifs in cluster one with the motifs of cluster two
+                for k in range(0, len(operon_fewer_motifs)):
+                    # Set initial minimum value 
+                    if (len(operon_more_motifs) > 0):
+                        min_val = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[0])
+                    
+                    for l in range(0, len(operon_more_motifs)):
+                        distance_between_motifs = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[l])
+                        print("fewer: (",len(operon_fewer_motifs),") ",k, " more: (",len(operon_more_motifs),") ", l, " distance: ", distance_between_motifs)
+                        pairwise_distances.append(distance_between_motifs)
+
+                        # If found new minimum, set min_val as new minimum value
+                        if (distance_between_motifs < min_val):
+                            min_val = distance_between_motifs
+
+                        # If last comparison, add min_val to minimum_distances array
+                        if (l == len(operon_more_motifs)-1):
+                            minimum_distances.append(min_val)
+                            print("min_val: ", min_val)
+                        
+                # If minimum distances for noise reduction were calculated
+                if (len(minimum_distances) > 0):
+                    print(sum(minimum_distances)/len(minimum_distances))
+                    write_to_edge_file(edges_output_file_noise_reduction,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(minimum_distances)/len(minimum_distances)))
+
+                # if pairwise_distances were calculated, write average, median, min, and max values to csv filie
+                if len(pairwise_distances) > 0:
+                    write_to_edge_file(edges_output_file_average,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(pairwise_distances)/len(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_median,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(statistics.median(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_minimum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(min(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_maximum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(max(pairwise_distances)))
+                    #print(i, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
+
+    # close all output files
+    edges_output_file_average.close()
+    edges_output_file_median.close()
+    edges_output_file_maximum.close()
+    edges_output_file_minimum.close()
+    edges_output_file_noise_reduction.close()
+    nodes_output_file.close()
+
+if __name__ == "__main__":
+    all_clusters = get_operon_clusters()
+    write_to_csv(all_clusters)
