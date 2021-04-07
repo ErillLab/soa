@@ -66,6 +66,7 @@ def get_motifs(meme_data_dir, e_val_threshold):
 
     #List of Motif objects that met the threshold
     motifs_in_record = []
+    records = []
 
     #Pull all of the records from the MEME output file
     with open(meme_data_dir + 'meme.xml') as f:
