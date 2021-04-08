@@ -6,7 +6,7 @@ from Bio import motifs
 from soa_operon_cluster import OperonCluster
 from soa_motif_analysis import find_pattern, calculate_motif_distance,calc_kld_distance, calc_euclidean, write_to_csv
 
-input_file = "test_motifs.txt"
+input_file = "test_operons.txt"
 dist_calc = calc_euclidean
 #dist_calc = calc_kld_distance
 
@@ -23,7 +23,7 @@ def get_clusters():
         array.append(line[1].replace('\n',''))
         motif = motifs.create(array)
         motifs_with_repeats = []
-        if (find_pattern(motif.instances)):
+        if (find_pattern(motif)):
             motifs_with_repeats.append(motif)
 
         new_cluster = OperonCluster(cluster_id = line[0])
@@ -34,4 +34,4 @@ def get_clusters():
 
 if __name__ == "__main__":
     clusters = get_clusters()
-    write_to_csv(input_file.split('.')[0], clusters,dist_calc)
+    write_to_csv(input_file.split('.')[0], clusters, dist_calc)
