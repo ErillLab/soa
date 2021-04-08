@@ -271,14 +271,14 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     toReturn = 0
     if distance_function is calc_euclidean :
         toReturn = 1 - (sum(dists) / len(dists))
+        print((sum(dists) / len(dists)))
     elif distance_function is calc_kld_distance:
         if(sum(dists) / len(dists)) == 0:
             toReturn = 0
         else:
             toReturn = 1/(sum(dists) / len(dists))
-    
-    if toReturn > max_dist:
-        toReturn = max_dist
+        if toReturn > max_dist:
+            toReturn = max_dist
 
     return toReturn
 
@@ -643,15 +643,15 @@ def write_to_csv(filename, operon_clusters, distance_calc):
                 # If minimum distances for noise reduction were calculated
                 if (len(minimum_distances) > 0):
                     # Write 1-distance to file
-                    write_to_edge_file(edges_output_file_noise_reduction,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(1-sum(minimum_distances)/len(minimum_distances)))
+                    write_to_edge_file(edges_output_file_noise_reduction,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(minimum_distances)/len(minimum_distances)))
 
                 # if pairwise_distances were calculated, write average, median, min, and max values to csv filie
                 if len(pairwise_distances) > 0:
                     # Write 1-distance to file
-                    write_to_edge_file(edges_output_file_average,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(1-sum(pairwise_distances)/len(pairwise_distances)))
-                    write_to_edge_file(edges_output_file_median,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(1-statistics.median(pairwise_distances)))
-                    write_to_edge_file(edges_output_file_minimum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(1-min(pairwise_distances)))
-                    write_to_edge_file(edges_output_file_maximum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(1-max(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_average,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(pairwise_distances)/len(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_median,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(statistics.median(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_minimum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(min(pairwise_distances)))
+                    write_to_edge_file(edges_output_file_maximum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(max(pairwise_distances)))
                     print(i+1, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
 
     # close all output files
