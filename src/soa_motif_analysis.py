@@ -272,7 +272,10 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     if distance_function is calc_euclidean :
         toReturn = 1 - (sum(dists) / len(dists))
     elif distance_function is calc_kld_distance:
-        toReturn = 1/(sum(dists) / len(dists))
+        if(sum(dists) / len(dists)) == 0:
+            toReturn = 0
+        else:
+            toReturn = 1/(sum(dists) / len(dists))
     
     if toReturn > max_dist:
         toReturn = max_dist
