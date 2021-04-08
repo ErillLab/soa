@@ -33,8 +33,8 @@ print(len(motif_a.instances))
 
 
 
-motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA']))
-motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
+#motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA']))
+#motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
 
 
 print(motif_a.instances[0][0:1])

@@ -204,7 +204,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True):
+def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, max_dist=100):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -219,6 +219,8 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
         If false, only the columns in the alignment are considered for the distance calculation.
     add_psuedocounts: bool
         A pseudocount value of (1/average # of sequences per motif) will be set for both motifs.
+    max_dist: float
+        The maximum distance allowed between two motifs.
     '''
     if offset is None:
         offset = get_alignment_offset(motif, other)
@@ -266,9 +268,16 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
 
                 dists.append(distance_function(cola, colb))
 
+    toReturn = 0
+    if distance_function is calc_euclidean :
+        toReturn = 1 - (sum(dists) / len(dists))
+    elif distance_function is calc_kld_distance:
+        toReturn = 1/(sum(dists) / len(dists))
     
-    
-    return sum(dists) / len(dists)
+    if toReturn > max_dist:
+        toReturn = max_dist
+
+    return toReturn
 
 ################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
 # Approach:
