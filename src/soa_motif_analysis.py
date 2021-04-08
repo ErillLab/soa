@@ -624,21 +624,21 @@ def write_to_csv(filename, operon_clusters, distance_calc):
                 for k in range(0, len(operon_fewer_motifs)):
                     # Set initial minimum value 
                     if (len(operon_more_motifs) > 0):
-                        min_val = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[0], distance_calc)
+                        max_val = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[0], distance_calc)
                     
                     for l in range(0, len(operon_more_motifs)):
                         distance_between_motifs = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[l], distance_calc)
                         #print("fewer: (",len(operon_fewer_motifs),") ",k, " more: (",len(operon_more_motifs),") ", l, " distance: ", distance_between_motifs)
                         pairwise_distances.append(distance_between_motifs)
 
-                        # If found new minimum, set min_val as new minimum value
-                        if (distance_between_motifs < min_val):
-                            min_val = distance_between_motifs
+                        # If found new minimum, set max_val as new minimum value
+                        if (distance_between_motifs > max_val):
+                            max_val = distance_between_motifs
 
-                        # If last comparison, add min_val to minimum_distances array
+                        # If last comparison, add max_val to minimum_distances array
                         if (l == len(operon_more_motifs)-1):
-                            minimum_distances.append(min_val)
-                            #print("min_val: ", min_val)
+                            minimum_distances.append(max_val)
+                            #print("max_val: ", max_val)
                         
                 # If minimum distances for noise reduction were calculated
                 if (len(minimum_distances) > 0):
