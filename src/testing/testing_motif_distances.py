@@ -27,7 +27,7 @@ records_2 = get_motifs(test_meme_output_2, 100)
 motif_a = records_1[0]
 motif_b = records_2[0]
 
-print(type(motif_a.instances[0]))
+print(type(motif_a.instances[0][0:1]))
 print(len(motif_a.instances))
 
 

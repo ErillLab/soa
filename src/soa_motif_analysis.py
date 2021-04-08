@@ -414,7 +414,7 @@ def find_pattern(motif, self_score_ratio_threshold=0.6,
     '''
 
     sites = []
-    sites = [str(s) for s in motif.instances]
+    sites = motif.instances
 
     if len(sites) == 0:
         return False
