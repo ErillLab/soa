@@ -393,14 +393,14 @@ def inverted_repeat(seq):
     return ''.join(complement[b] for b in seq[::-1])
 
 
-def find_pattern(motif, self_score_ratio_threshold=0.6,
+def find_pattern(target_motif, self_score_ratio_threshold=0.6,
                  kmer_pair_score_ratio_threshold=0.3):
     '''
     Returns a boolean indicating whether a direct or inverted repeat pattern was found in a given motif
 
     Parameters
     ----------
-    motif: Motif object
+    target_motif: Motif object
         The motif of interest.
     self_score_ratio_threshold: float
         A threshold value to determine whether a score indicates a repeat
@@ -414,7 +414,7 @@ def find_pattern(motif, self_score_ratio_threshold=0.6,
     '''
 
     sites = []
-    sites = motif.instances
+    sites = target_motif.instances
 
     if len(sites) == 0:
         return False
