@@ -204,7 +204,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True):
+def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -217,15 +217,21 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     padded: bool
         If true, the distance calculation spans the entire length of both motifs and columns that are outside the alignment are compared to a column of equiprobable frequencies: ({A: 0.25, T: 0.25, C: 0.25, G: 0.25}). 
         If false, only the columns in the alignment are considered for the distance calculation.
-    
+    add_psuedocounts: bool
+        A pseudocount value of (1/average # of sequences per motif) will be set for both motifs.
     '''
     if offset is None:
         offset = get_alignment_offset(motif, other)
     if offset < 0:
-        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded)
+        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded, add_psuedocounts=add_psuedocounts)
 
     dists = []
     alignment_length = min(len(motif), len(other)-offset)
+
+    if add_psuedocounts:
+        psuedocount_val = 1/(len(motif.instances) + len(other.instances)/2)
+        motif.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)
+        other.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)
 
     for pos in range(alignment_length):
         cola = pwm_col(motif.pwm, pos)
@@ -386,15 +392,15 @@ def inverted_repeat(seq):
     return ''.join(complement[b] for b in seq[::-1])
 
 
-def find_pattern(sites, self_score_ratio_threshold=0.6,
+def find_pattern(motif, self_score_ratio_threshold=0.6,
                  kmer_pair_score_ratio_threshold=0.3):
     '''
     Returns a boolean indicating whether a direct or inverted repeat pattern was found in a given motif
 
     Parameters
     ----------
-    sites: [string]
-        The sequences making up the motif
+    motif: Motif object
+        The motif of interest.
     self_score_ratio_threshold: float
         A threshold value to determine whether a score indicates a repeat
     kmer_pair_score_ratio_threshold: float
@@ -405,6 +411,13 @@ def find_pattern(sites, self_score_ratio_threshold=0.6,
     found_repeat: boolean
         Indicates whether a direct or inverted repeat was found
     '''
+
+    sites = []
+    sites = str(motif.instances).split('\n')[:-1]
+
+    if len(sites) == 0:
+        return False
+
     # Splices all sites of a given motif into different sub-sequences (or k-mers) of size k
     k = 4
     sites_len = len(sites[0])

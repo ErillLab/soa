@@ -6,6 +6,7 @@
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from Bio.motifs import Motif, Instances
 from soa_operon import Operon
 from soa_sim_filter import sim_filter
 from tqdm import tqdm
@@ -14,7 +15,7 @@ import json
 
 class OperonCluster:
 
-    def __init__(self, cluster_id):
+    def __init__(self, cluster_id=None):
         self.cluster_id = cluster_id
         self.operons = []
         self.filtered_promoters = []
@@ -97,8 +98,10 @@ class OperonCluster:
                 "operon_id":op.operon_id,
                 "cluster_id":op.cluster_id,
                 "genome_accession":op.genome_accession,
+                "genome_fragment_name":op.geonome_fragment_name,
                 "features":[feat.protein_accession for feat in op.features],
-                "promoter":op.promoter
+                "promoter":op.promoter,
+                "strand":op.strand
 
             } for op in self.operons],
 
@@ -108,6 +111,44 @@ class OperonCluster:
 
         with open(output_file, 'w') as file:
             json.dump(data, file)
+
+
+    def load_from_json(self, file_path):
+        '''
+        Sets up all memeber variables based on the stored data in the JSON file. 
+
+        Parameters
+        ----------
+        file_path: str
+            Path to the JSON file that will be loaded in.
+        
+        Returns
+        -------
+        None
+        '''
+
+        file_reader = json.load(open(file_path, 'r'))
+
+        self.cluster_id = file_reader['cluster_id']
+
+        for op in file_reader['operons']:
+            temp_op = Operon(
+                operon_id=op['operon_id'],
+                genome_fragment_name='imported_cluster',
+                genome_accession=op['genome_accession'],
+                genome_features=op['features'],
+                strand='/'
+            )
+
+            temp_op.promoter = op['promoter']
+
+            self.operons.append(temp_op)
+        
+        self.filtered_promoters = file_reader['filtered_promoters']
+        
+        for m in file_reader['motifs']:
+            self.motifs.append(Motif(instances=Instances(m)))
+
 
     def __str__(self):
         '''

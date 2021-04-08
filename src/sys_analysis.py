@@ -669,37 +669,17 @@ def soa():
         run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path)
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
-    for c in operon_clusters:
+    #Export the clusters to JSON files. These files can be loaded into a cluster object by: c = OperonCluster()  c.load_from_json([path])
+    for c in tqdm(operon_clusters, desc='Writing clusters to file'):
         cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
         c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
-        #pickle.dump(c, open(cluster_file_name.format(cluster_id=c.cluster_id), 'wb'))
-        #print(c)
-        print('~'*15)
-        
-
-    '''
-    for k in indexed_promoters:
-        print(k + ": " + str(len(indexed_promoters[k])))
-
-    #Filter each list of promoters for each operon
-    for operon_id in tqdm(indexed_promoters.keys(), desc='Filtering promoters'):
-        filtered_list = sim_filter(seqeunces=indexed_promoters[operon_id], threhold_percent_id=0.85)
-        indexed_promoters[operon_id] = filtered_list
     
-    for k in indexed_promoters:
-        print(k + ": " + str(len(indexed_promoters[k])))
+    #Filter the motifs in each cluster so that only the DR/IR are present and rewrite the clusters to the JSON
+    for c in tqdm(operon_clusters, desc='DR/IR Filter'):
+        c.motifs = [m for m in c.motifs if find_pattern(m)] #ADD THE PARAMETERS FOR THE IR/DR DETECTION TO THE INPUT JSON
+        cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
+        c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
 
-    #Write a FASTA file for each operon containing all of the promoter sequences for that operons.
-    print('Writing promoter sequnces to FASTA...')
-    for operon_id in indexed_promoters:
-        print('----- ' + str(operon_id))
-        all_recs = []
-        i = 0
-        for prom in indexed_promoters[operon_id]:
-            all_recs.append(SeqRecord(seq=Seq.Seq(prom), id=(operon_id + '_' + str(i)), description='|'))
-            i += 1
-        SeqIO.write(all_recs, promoter_out_dir.format(operon_id=operon_id), 'fasta')
-        all_recs = [] '''
 
 
 if __name__ == "__main__":

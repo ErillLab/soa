@@ -5,7 +5,7 @@ A testing module to test other modules.
 '''
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join("testing.py" ,"../../")))
+sys.path.append(os.path.abspath(os.path.join("testing_motif_distances.py" ,"../../")))
 import soa_sim_filter
 from soa_motif_analysis import  *
 from Bio.motifs import Motif, Instances
@@ -30,12 +30,21 @@ motif_b = records_2[0]
 
 
 
-#motif_a = Motif(instances=Instances('ATAAGCCACTACACCCCATAA'))
-#motif_a = Motif(instances=Instances('ATAATCCACTACACCCCATAA'))
+#motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA','ATAATCCACTACACCCCATAA']))
+#motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
+
+print(motif_a.pwm)
+
+val = 2
+test_dict = dict(A=val, C=val, G=val, T=val)
+
+motif_a.pseudocounts = test_dict
+
+print(motif_a.pwm)
 
 print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance))
 
-val = len(motif_a.instances)/4
+val = 1/len(motif_b.instances)
 test_dict = dict(A=val, C=val, G=val, T=val)
 
 motif_a.pseudocounts = test_dict
