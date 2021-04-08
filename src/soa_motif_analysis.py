@@ -229,6 +229,7 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     alignment_length = min(len(motif), len(other)-offset)
 
     if add_psuedocounts:
+        #The value = average length of the two motifs / average number of sequences
         psuedocount_val = (len(str(motif.instances).split('\n')[0]) + len(str(other.instances).split('\n')[0]) / 2)/(len(motif.instances) + len(other.instances) / 2)
         motif.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)
         other.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)

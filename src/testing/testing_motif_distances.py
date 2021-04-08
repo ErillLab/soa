@@ -30,8 +30,8 @@ motif_b = records_2[0]
 
 
 
-#motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA','ATAATCCACTACACCCCATAA']))
-#motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
+motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA']))
+motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
 
 '''
 print(motif_a.pwm)
