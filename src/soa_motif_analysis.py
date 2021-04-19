@@ -204,7 +204,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, max_dist=100):
+def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, psuedocount_val=0.25, scaling_factor=1):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -225,14 +225,14 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     if offset is None:
         offset = get_alignment_offset(motif, other)
     if offset < 0:
-        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded, add_psuedocounts=add_psuedocounts)
+        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded, add_psuedocounts=add_psuedocounts, psuedocount_val=psuedocount_val, scaling_factor=scaling_factor)
 
     dists = []
     alignment_length = min(len(motif), len(other)-offset)
 
     if add_psuedocounts:
         #The value = average length of the two motifs / average number of sequences
-        psuedocount_val = (len(str(motif.instances).split('\n')[0]) + len(str(other.instances).split('\n')[0]) / 2)/(len(motif.instances) + len(other.instances) / 2)
+        #psuedocount_val = (len(str(motif.instances).split('\n')[0]) + len(str(other.instances).split('\n')[0]) / 2)/(len(motif.instances) + len(other.instances) / 2)
         motif.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)
         other.pseudocounts = dict(A=psuedocount_val, G=psuedocount_val, T=psuedocount_val, C=psuedocount_val)
 
@@ -274,11 +274,10 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
         print((sum(dists) / len(dists)))
     elif distance_function is calc_kld_distance:
         if(sum(dists) / len(dists)) == 0:
-            toReturn = 0
+            toReturn = scaling_factor
         else:
-            toReturn = 1/(sum(dists) / len(dists))
-        if toReturn > max_dist:
-            toReturn = max_dist
+            toReturn = scaling_factor/(1+(sum(dists) / len(dists)))
+        
 
     return toReturn
 
