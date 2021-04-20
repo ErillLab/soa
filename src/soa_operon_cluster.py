@@ -48,6 +48,16 @@ class OperonCluster:
 
         tqdm.write('----- Post-filtering: ' + str(len(self.filtered_promoters)))
 
+    def filter_motifs_by_instance_count(self, instances_min=5):
+        '''
+        Filters out any motifs that do not meet the threhold number of instances.
+
+        Parameters
+        ----------
+        instances_min: int
+            The minimum number of instances required for a motif to remain in the cluster. 
+        '''
+        self.motifs = [m for m in self.motifs if len(m.instances) >= instances_min]
 
     def write_promoters(self, output_file):
         '''
@@ -136,9 +146,11 @@ class OperonCluster:
                 operon_id=op['operon_id'],
                 genome_fragment_name='imported_cluster',
                 genome_accession=op['genome_accession'],
-                genome_features=op['features'],
+                genome_features='imported',
                 strand='/'
             )
+
+            temp_op.features=op['features']
 
             temp_op.promoter = op['promoter']
 
