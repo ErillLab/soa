@@ -679,12 +679,6 @@ def soa():
         cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
         c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
     
-    #Filter the motifs in each cluster so that only the DR/IR are present and motifs meet the min number of instances. Then, rewrite the clusters to the JSON
-    for c in tqdm(operon_clusters, desc='DR/IR Filter'):
-        c.motifs = [m for m in c.motifs if find_pattern(m)] #ADD THE PARAMETERS FOR THE IR/DR DETECTION TO THE INPUT JSON
-        c.filter_motifs_by_instance_count(instances_min=5) #ADD THE PARAMETERS FOR THE IR/DR DETECTION TO THE INPUT JSON
-        cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
-        c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
 
 
 
