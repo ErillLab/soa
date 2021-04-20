@@ -213,7 +213,6 @@ def local_blast_search(input_record, db_path, operon_id, db_id='Vibrio', e_cutof
     print("\t|~> Returning " + str(len(return_hits)) + " unique hits")
     return return_hits
 
-
 def make_reference_blastdb():
     '''
     Makes the local BLAST database out of the nucleotide records associated with the reference organism. This will be used for the reverse BLAST.
@@ -276,7 +275,6 @@ def make_reference_blastdb():
     mkblastdb_command()
 
     print('\tMade local db for ' + str(reference_assembly_accession))
-
 
 def check_reverse_blast(query_accession, annotated_hit):
     '''
@@ -669,7 +667,9 @@ def soa():
         run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path)
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
-    #Export the clusters to JSON files. These files can be loaded into a cluster object by: c = OperonCluster()  c.load_from_json([path])
+    #Export the clusters to JSON files. These files can be loaded into a cluster object by: 
+    # c = OperonCluster()  
+    # c.load_from_json([path])
     for c in tqdm(operon_clusters, desc='Writing clusters to file'):
         cluster_file_name = '../output/complete_clusters/{cluster_id}.json'
         c.export_to_json(output_file=cluster_file_name.format(cluster_id=c.cluster_id))
@@ -682,9 +682,10 @@ def soa():
 
 
 
+
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         print('Incorrect input. Usage: sys_analysis.py [inputfile_name].json')
         quit
 
