@@ -108,7 +108,7 @@ class OperonCluster:
                 "operon_id":op.operon_id,
                 "cluster_id":op.cluster_id,
                 "genome_accession":op.genome_accession,
-                "genome_fragment_name":op.geonome_fragment_name,
+                "genome_fragment_name":op.genome_fragment_name,
                 "features":[feat.protein_accession for feat in op.features],
                 "promoter":op.promoter,
                 "strand":op.strand
