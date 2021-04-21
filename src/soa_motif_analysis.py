@@ -577,21 +577,31 @@ def write_to_csv(filename, operon_clusters, distance_calc):
     '''
 
     # Create file objects for various distance calculation methods (for edge csv files)
+    '''
     edges_output_file_average = open(filename + "_edges_average.csv", "w")
     edges_output_file_median = open(filename + "_edges_median.csv", "w")
     edges_output_file_minimum = open(filename + "_edges_minimum.csv", "w")
     edges_output_file_maximum = open(filename + "_edges_maximum.csv", "w")
-    edges_output_file_noise_reduction = open(filename + "_edges_noise_reduction.csv", "w")
-    
+    '''
+    if (distance_calc == calc_euclidean):
+        edges_output_file_avg_mins = open(filename + "_edges_avg_mins_euclidean.csv", "w")
+    else:
+        edges_output_file_avg_mins = open(filename + "_edges_avg_mins_kld.csv", "w")
     #  Write headers to be recognized in Gephi
+    '''
     edges_output_file_average.write("Source,Target,Weight\n")
     edges_output_file_median.write("Source,Target,Weight\n")
     edges_output_file_minimum.write("Source,Target,Weight\n")
     edges_output_file_maximum.write("Source,Target,Weight\n")
-    edges_output_file_noise_reduction.write("Source,Target,Weight\n")
+    '''
+    edges_output_file_avg_mins.write("Source,Target,Weight\n")
 
     # Create file oject for node csv file
-    nodes_output_file = open(filename + "_nodes.csv", "w")
+    if (distance_calc == calc_euclidean):
+        nodes_output_file = open(filename + "_nodes_euclidean.csv", "w")
+    else:
+        nodes_output_file = open(filename + "_nodes_kld.csv", "w")
+
     nodes_output_file.write("Id,Label\n")
 
     for i in range(0,len(operon_clusters)):
@@ -627,7 +637,6 @@ def write_to_csv(filename, operon_clusters, distance_calc):
                     
                     for l in range(0, len(operon_more_motifs)):
                         distance_between_motifs = calculate_motif_distance(operon_fewer_motifs[k],operon_more_motifs[l], distance_calc)
-                        #print("fewer: (",len(operon_fewer_motifs),") ",k, " more: (",len(operon_more_motifs),") ", l, " distance: ", distance_between_motifs)
                         pairwise_distances.append(distance_between_motifs)
 
                         # If found new minimum, set max_val as new minimum value
@@ -637,13 +646,13 @@ def write_to_csv(filename, operon_clusters, distance_calc):
                         # If last comparison, add max_val to minimum_distances array
                         if (l == len(operon_more_motifs)-1):
                             minimum_distances.append(max_val)
-                            #print("max_val: ", max_val)
                         
                 # If minimum distances for noise reduction were calculated
                 if (len(minimum_distances) > 0):
                     # Write 1-distance to file
-                    write_to_edge_file(edges_output_file_noise_reduction,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(minimum_distances)/len(minimum_distances)))
-
+                    write_to_edge_file(edges_output_file_avg_mins,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(sum(minimum_distances)/len(minimum_distances)))
+                    print(i+1, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
+                '''
                 # if pairwise_distances were calculated, write average, median, min, and max values to csv filie
                 if len(pairwise_distances) > 0:
                     # Write 1-distance to file
@@ -652,13 +661,16 @@ def write_to_csv(filename, operon_clusters, distance_calc):
                     write_to_edge_file(edges_output_file_minimum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(min(pairwise_distances)))
                     write_to_edge_file(edges_output_file_maximum,operon_clusters[i].cluster_id, operon_clusters[j].cluster_id, str(max(pairwise_distances)))
                     print(i+1, "/" , len(operon_clusters), "--", operon_clusters[i].cluster_id, "|",operon_clusters[j].cluster_id)
+                '''
 
     # close all output files
+    '''
     edges_output_file_average.close()
     edges_output_file_median.close()
     edges_output_file_maximum.close()
     edges_output_file_minimum.close()
-    edges_output_file_noise_reduction.close()
+    '''
+    edges_output_file_avg_mins.close()
     nodes_output_file.close()
 
 if __name__ == "__main__":
