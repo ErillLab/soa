@@ -271,14 +271,13 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     toReturn = 0
     if distance_function is calc_euclidean :
         toReturn = 1 - (sum(dists) / len(dists))
-        print((sum(dists) / len(dists)))
     elif distance_function is calc_kld_distance:
         if(sum(dists) / len(dists)) == 0:
             toReturn = scaling_factor
         else:
             toReturn = scaling_factor/(1+(sum(dists) / len(dists)))
         
-
+    print(toReturn)
     return toReturn
 
 ################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################

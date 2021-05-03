@@ -27,70 +27,24 @@ records_2 = get_motifs(test_meme_output_2, 100)
 motif_a = records_1[0]
 motif_b = records_2[0]
 
-print(type(motif_a.instances[0][0:1]))
-print(len(motif_a.instances))
+#motif_a = Motif(instances=Instances(['AAAAAAAAAAAAAAAAAAAA']))
+#motif_b = Motif(instances=Instances(['AAAAAAAAAAAAAAAAAAAG']))
+#motif_b = Motif(instances=Instances(['TGCTCGATCGATCGATTGCTA']))
 
+#print(motif_a.pwm)
+#print(motif_b.pwm)
 
+print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance, add_psuedocounts=False, scaling_factor=10))
 
-
-#motif_a = Motif(instances=Instances(['ATAAGCCACTACACCCCATAA']))
-#motif_b = Motif(instances=Instances(['ATAATCCACTACACCCCATAA']))
-
-
-print(motif_a.instances[0][0:1])
-print(len(motif_a.instances))
-
-
-'''
-print(motif_a.pwm)
-
-val = .000000001/len(motif_a.instances)
+val = .25
+#val = (len(str(motif_b.instances).split('\n')[0]) + len(str(motif_a.instances).split('\n')[0]) / 2)/(len(motif_b.instances) + len(motif_a.instances) / 2)
 test_dict = dict(A=val, C=val, G=val, T=val)
 
-motif_a.pseudocounts = test_dict
+#motif_a.pseudocounts = test_dict
+#motif_b.pseudocounts = test_dict
 
-print(motif_a.pwm)'''
-
-print(motif_a.pwm)
-print(motif_b.pwm)
-
-print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance, add_psuedocounts=False))
-
-#val = .25
-val = (len(str(motif_b.instances).split('\n')[0]) + len(str(motif_a.instances).split('\n')[0]) / 2)/(len(motif_b.instances) + len(motif_a.instances) / 2)
-test_dict = dict(A=val, C=val, G=val, T=val)
-
-motif_a.pseudocounts = test_dict
-motif_b.pseudocounts = test_dict
-
-print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance, add_psuedocounts=False))
+print(calculate_motif_distance(motif_a, motif_b, padded=True, distance_function=calc_kld_distance, add_psuedocounts=True, scaling_factor=10))
 
 
-print(motif_a.pwm)
-print(motif_b.pwm)
-
-'''
-print(motif_a.instances[0])
-print(motif_b.instances[0])
-
-
-a_seqs = []
-b_seqs = []
-
-
-for offset in range(-len(motif_b) + 1, len(motif_a)):
-    print('Working on offset ', offset, ':')
-    get_ic(motif_a, motif_b, offset)'''
-'''
-
-motif_a = Motif(instances=Instances(['AAAAAAATCG' ,'AAAAAAGATC','AAAAAACGAT','AAAAAATCGA']))
-
-motif_b = Motif(instances=Instances(['ATCGAAAAAA','GATCAAAAAA','CGATAAAAAA','TCGAAAAAAA']))
-
-print(motif_a.pwm)
-print(motif_a.pssm)
-
-print(motif_b.pwm)
-print(motif_b.pssm)
-
-print(calculate_motif_distance(motif_a, motif_b))'''
+#print(motif_a.pwm)
+#print(motif_b.pwm)

@@ -10,7 +10,12 @@ sys.path.append(os.path.abspath(os.path.join("test_cluster_loading.py" ,"../../"
 import soa_sim_filter
 from soa_motif_analysis import  *
 from Bio.motifs import Motif, Instances
+import json
 
 c = OperonCluster()
 c.load_from_json(file_path='/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/Vibrio_SOA/Saved Clusters/complete_clusters_04072021/CLSTR1602.json')
-print(c)
+
+
+print(json.load(open('/Users/ichaudr/Documents/UMBC/Lab-Erill/Isaac/Vibrio_SOA/Saved Clusters/complete_clusters_04072021/CLSTR1602.json', 'r'))['operons'][0])
+
+print(c.operons[0].features)

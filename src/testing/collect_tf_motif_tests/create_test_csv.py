@@ -32,11 +32,11 @@ import sys
 sys.path.append(os.path.abspath(os.path.join("collect_tf_motifs.json" ,"../../..")))
 import json
 from Bio import motifs
-from soa_operon_cluster import OperonCluster
+from soa_operon_cluster import OperonCluster 
 from soa_motif_analysis import find_pattern, calculate_motif_distance,calc_kld_distance, calc_euclidean, write_to_csv
 
 # Set default file (in correct format as described above) containing operons and their motifs from Collect TF
-operon_file = 'sample_operons+motifs.txt'
+operon_file = 'lex_a_test_2_input_file.txt'
 # Set defaul motif distance calculation - either 'calc_euclidean' or 'calc_kld_distance'
 #distance_calc = calc_euclidean
 distance_calc = calc_kld_distance
@@ -51,7 +51,7 @@ def get_clusters_from_file():
 
     Returns
     -------
-    operon_clusters:[operon_cluster] 
+    operon_clusters:[operon_cluster]  
         An array holding operon_cluster objects for each operon in the specifed file
     '''
 
