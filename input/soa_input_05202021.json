@@ -26,15 +26,16 @@
     "operon_prom_assemb":[{
         "promoter_min_width": 10,
         "promoter_max_width": 300,
-        "max_seq_sim": 0.85,
+        "max_seq_sim": 0.75,
         "operon_max_intergenic_distance": 150
     }],
 
     "meme_motif":[{
         "meme_exec_path": "/Users/ichaudr/Documents/UMBC/Lab-Erill/meme-5.3.0/src/meme",
-        "motif_e_val_threshold": 10E-3,
+        "motif_e_val_threshold": 10E-10,
         "motif_max_width": 20,
-        "motif_min_width": 10
+        "motif_min_width": 10,
+        "motif_min_instances": 10
     }],
 
     "output":[{

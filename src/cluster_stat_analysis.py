@@ -17,6 +17,7 @@ This script will report a set of statistics for all of the clusters that were sa
 
 from Bio.motifs import Motif, Instances
 import json
+import csv
 import os
 import statistics
 
@@ -86,3 +87,13 @@ print('\tMin IC: ', min_ic)
 print('\tMedian IC: ', median_ic)
 print('\tMode IC: ', mode_ic)
 print('-'*10)
+
+with open('./motif_counts.csv', 'w') as file:
+    filew = csv.writer(file)
+    for c in list(num_motifs_per_cluster.values()):
+        filew.writerow([c])
+
+with open('./motif_ic.csv', 'w') as file:
+    filew = csv.writer(file)
+    for ic in all_ics:
+        filew.writerow([ic])

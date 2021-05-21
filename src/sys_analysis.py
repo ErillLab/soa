@@ -67,6 +67,9 @@ operon_max_intergenic_distance = 150
 #MEME and motif parameters
 meme_exec_path = ''
 motif_e_val_threshold = 10E-3
+motif_min_width = 10
+motif_max_width = 20
+motif_min_instances = 5
 
 #Output Parameters
 cache_dir = '/Volumes/Issac_Ext/ErillsLab/nucleotide_gbwithparts_cache/'
@@ -484,8 +487,14 @@ def load_input_json(path):
 
     global meme_exec_path
     global motif_e_val_threshold
+    global motif_max_width
+    global motif_min_width
+    global motif_min_instances
     meme_exec_path = file_reader['meme_motif'][0]['meme_exec_path']
     motif_e_val_threshold = file_reader['meme_motif'][0]['motif_e_val_threshold']
+    motif_max_width = file_reader['meme_motif'][0]['motif_max_width']
+    motif_min_width = file_reader['meme_motif'][0]['motif_min_width']
+    motif_min_instances = file_reader['meme_motif'][0]['motif_min_instances']
 
     global cache_dir
     cache_dir = file_reader['output'][0]['cache_dir']
@@ -664,7 +673,7 @@ def soa():
         in_file = promoter_out_dir.format(id=cluster.cluster_id)
         out_dir = meme_out_dir.format(id=cluster.cluster_id)
 
-        run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path)
+        run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path, motif_min_width=motif_min_width, motif_max_width=motif_max_width)
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
     #Export the clusters to JSON files. These files can be loaded into a cluster object by: 
@@ -672,7 +681,7 @@ def soa():
     # c.load_from_json([path])
     for c in tqdm(operon_clusters, desc='Writing clusters to file'):
         c.motifs = [m for m in c.motifs if find_pattern(m)] #ADD THE PARAMETERS FOR THE IR/DR DETECTION TO THE INPUT JSON
-        c.filter_motifs_by_instance_count(instances_min=5) #ADD THE PARAMETERS FOR THE IR/DR DETECTION TO THE INPUT JSON
+        c.filter_motifs_by_instance_count(instances_min=motif_min_instances)
         if len(c.motifs) == 0:
             tqdm.write('Not writing ' + c.cluster_id + '. No motifs present after filtering.')
             continue
