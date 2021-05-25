@@ -673,7 +673,7 @@ def soa():
         in_file = promoter_out_dir.format(id=cluster.cluster_id)
         out_dir = meme_out_dir.format(id=cluster.cluster_id)
 
-        run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path, motif_min_width=motif_min_width, motif_max_width=motif_max_width)
+        run_meme(input_file=in_file, output_dir=out_dir, meme_exec_path=meme_exec_path, width_min=motif_min_width, width_max=motif_max_width)
         cluster.motifs = get_motifs(meme_data_dir=out_dir, e_val_threshold=motif_e_val_threshold)
 
     #Export the clusters to JSON files. These files can be loaded into a cluster object by: 
