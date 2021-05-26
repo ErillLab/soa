@@ -129,6 +129,9 @@ def sim_filter(seqeunces, threhold_percent_id):
         A list of filtered sequences. 
     '''
 
+    if threshold_percent_id == -1:
+        return sequences
+
     if len(seqeunces) < 2:
         print('Not enough sequences passed in.')
         return seqeunces

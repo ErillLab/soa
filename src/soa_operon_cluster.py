@@ -35,10 +35,6 @@ class OperonCluster:
         None
         '''
 
-        #Return if no filtering is applied.
-        if threhold_percent_id == -1:
-            return
-
         #Pool all of the promoters from the operons in this cluster
         all_promoters = []
 
