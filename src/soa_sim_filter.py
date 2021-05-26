@@ -112,7 +112,7 @@ def get_centroid(sequences):
 
 
 
-def sim_filter(seqeunces, threhold_percent_id):
+def sim_filter(seqeunces, threshold_percent_id):
     '''
     Filters a set of sequences so no two sequences have a percent ID higher than the threshold. 
 
@@ -162,7 +162,7 @@ def sim_filter(seqeunces, threhold_percent_id):
                 print(seq)
                 continue
 
-            if mp >= threhold_percent_id:
+            if mp >= threshold_percent_id:
                 matched_seqs.append(seq)
         
         #Append the matched seqs to the list for this bin and remove the seqs from the list of sequences
