@@ -174,7 +174,7 @@ def sim_filter(sequences, threshold_percent_id, cache_file=None):
             if len(seq) < 1:
                 continue
 
-            mp = get_percent_matches(seq, bins[bin_key][0], cache_file)
+            mp = float(get_percent_matches(seq, bins[bin_key][0], cache_file))
 
             if mp == None:
                 print(seq)
