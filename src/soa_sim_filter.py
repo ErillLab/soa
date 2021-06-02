@@ -112,7 +112,7 @@ def get_centroid(sequences):
 
 
 
-def sim_filter(seqeunces, threshold_percent_id):
+def sim_filter(sequences, threshold_percent_id):
     '''
     Filters a set of sequences so no two sequences have a percent ID higher than the threshold. 
 
@@ -132,27 +132,27 @@ def sim_filter(seqeunces, threshold_percent_id):
     if threshold_percent_id == -1:
         return sequences
 
-    if len(seqeunces) < 2:
+    if len(sequences) < 2:
         print('Not enough sequences passed in.')
-        return seqeunces
+        return sequences
 
     #Sort all of the sequences into "bins" based on whether or not their percent identity is above the threshold
     bins = {}
 
     i = 0
-    while len(seqeunces) > 0:
+    while len(sequences) > 0:
 
         #Make a bin for the first sequence
         bin_key = "bin" + str(i)
-        bins.update({bin_key:[seqeunces.pop(0)]})
+        bins.update({bin_key:[sequences.pop(0)]})
 
-        if len(seqeunces) == 0:
+        if len(sequences) == 0:
             continue
 
         #The list of sequnces that are within the threshold for the current bin
         matched_seqs =[]
 
-        for seq in seqeunces:
+        for seq in sequences:
             if len(seq) < 1:
                 continue
 
@@ -168,7 +168,7 @@ def sim_filter(seqeunces, threshold_percent_id):
         #Append the matched seqs to the list for this bin and remove the seqs from the list of sequences
         for seq in matched_seqs:
             bins[bin_key].append(seq)
-            seqeunces.remove(seq)
+            sequences.remove(seq)
         
         i += 1
     

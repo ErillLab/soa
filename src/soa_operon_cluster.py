@@ -21,7 +21,7 @@ class OperonCluster:
         self.filtered_promoters = []
         self.motifs = []
     
-    def filter_promoters(self, threhold_percent_id=0.85):
+    def filter_promoters(self, threshold_percent_id=0.85):
         '''
         Pulls the promoter from all of the operons associated with this cluster and filters them based off the similarity threshold. 
 
@@ -44,7 +44,7 @@ class OperonCluster:
         tqdm.write('----- Pre-filtering: ' + str(len(all_promoters)))
         
         #Filter the promoters
-        self.filtered_promoters = sim_filter(all_promoters, threhold_percent_id=threhold_percent_id)
+        self.filtered_promoters = sim_filter(all_promoters, threshold_percent_id=threshold_percent_id)
 
         tqdm.write('----- Post-filtering: ' + str(len(self.filtered_promoters)))
 

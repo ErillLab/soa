@@ -343,7 +343,7 @@ def score_site(pssm, site):
     score: float
         The score of the site using the given pssm 
     '''
-    score = sum(pssm[site[i]][i] for i in range(len(site)))
+    score = sum(pssm[site[i]][i] for i in range(len(site)))/len(site)
     return score
 
 
@@ -403,8 +403,8 @@ def inverted_repeat(seq):
     return ''.join(complement[b] for b in seq[::-1])
 
 
-def find_pattern(target_motif, self_score_ratio_threshold=0.6,
-                 kmer_pair_score_ratio_threshold=0.3):
+def find_pattern(target_motif, self_score_ratio_threshold=0.4,
+                 kmer_pair_score_ratio_threshold=0.7, spacer_score_ratio_threshold = 0.95):
     '''
     Returns a boolean indicating whether a direct or inverted repeat pattern was found in a given motif
 
@@ -452,9 +452,10 @@ def find_pattern(target_motif, self_score_ratio_threshold=0.6,
     pattern = ('SB',0 , 0, 0)
     found_repeat = False
 
-    # Algin kmers in all possible combinations
+    # Align kmers in all possible combinations
     for kmer_a, kmer_b in itertools.combinations(all_kmers, 2):
-        if not (kmer_a['start'] >= kmer_b['end'] or kmer_b['start'] >= kmer_a['end']):
+        # Make sure there are at least 3 basepairs of spacing between dyads
+        if not (kmer_a['start'] >= kmer_b['end']+4 or kmer_b['start'] >= kmer_a['end']+4):
             continue
 
         if kmer_a['self_score'] < kmer_b['self_score']:
@@ -465,14 +466,44 @@ def find_pattern(target_motif, self_score_ratio_threshold=0.6,
         score = score_sites(kmer_a['pssm'], kmer_b['seqs'])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('DR', score, kmer_a['start'], kmer_b['start'])
-            found_repeat = True
+            if kmer_b['start'] > kmer_a['end']:
+                spacer_begin = kmer_a['end']
+                spacer_end = kmer_b['start']
+            else:
+                spacer_begin = kmer_b['start']
+                spacer_end = kmer_a['end']
+            spacer_seqs = slice_sites(sites, spacer_begin, spacer_end)
+            spacer_motif = build_motif(spacer_seqs)
+            spacer_self_score = score_sites(spacer_motif.pssm , spacer_motif.instances)
+            kmers_avg_score = (kmer_a['self_score'] + kmer_b['self_score'])/2
+            if (spacer_self_score < kmers_avg_score * spacer_score_ratio_threshold):
+                found_repeat = True
 
         # Look for inverted-repeat
         score = score_sites(
             kmer_a['pssm'], [inverted_repeat(site) for site in kmer_b['seqs']])
         if (score > kmer_pair_score_ratio_threshold*kmer_a['self_score'] and score > pattern[1]):
             pattern = ('IR', score, kmer_a['start'], kmer_b['start'])
-            found_repeat = True
+            if kmer_b['start'] > kmer_a['end']:
+                spacer_begin = kmer_a['end']
+                spacer_end = kmer_b['start']
+            else:
+                spacer_begin = kmer_b['start']
+                spacer_end = kmer_a['end']
+            spacer_seqs = slice_sites(sites, spacer_begin, spacer_end)
+            spacer_motif = build_motif(spacer_seqs)
+            spacer_self_score = score_sites(spacer_motif.pssm , spacer_motif.instances)
+            kmers_avg_score = (kmer_a['self_score'] + kmer_b['self_score'])/2
+            if (spacer_self_score < kmers_avg_score * spacer_score_ratio_threshold):
+                found_repeat = True
+            '''
+            print(target_motif.pssm)
+            print('Full Consensus: ', target_motif.consensus)
+            print('kmer_a Consensus: ', target_motif.consensus[kmer_a['start']:kmer_a['end']], 'self_score: ', kmer_a['self_score'])
+            print('kmer_b Consensus: ', target_motif.consensus[kmer_b['start']:kmer_b['end']], 'self_score: ', kmer_b['self_score'])
+            print('Spacer Consensus: ', spacer_motif.consensus, 'self_score: ', score_sites(spacer_motif.pssm , spacer_motif.instances))
+            '''
+            
 
     return found_repeat
 

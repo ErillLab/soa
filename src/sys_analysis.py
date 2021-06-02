@@ -662,7 +662,7 @@ def soa():
 
 
         tqdm.write('Filtering ' + cluster.cluster_id)
-        cluster.filter_promoters(threhold_percent_id=max_seq_sim)
+        cluster.filter_promoters(threshold_percent_id=max_seq_sim)
         cluster.write_promoters(output_file=promoter_out_dir.format(id=cluster.cluster_id))
     
     #Preform MEME analysis on all of the clusters
