@@ -8,7 +8,7 @@ Holds functions relevant for similarity filter in sys_analysis.py.
 from Bio import pairwise2
 import random
 
-def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open':-1, 'gap_extd': -0.5}):
+def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open':-1, 'gap_extd': -0.5}, cache_file=None):
     '''
     Returns the percent matches between two sequences. 
 
@@ -19,12 +19,22 @@ def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open
     scoring: dictionary
         The scoring to use for the alignment in the following format: scoring={'match':__, 'mismatch':__, 'gap_open':__, 'gap_extd': __}
         Default: scoring={'match':2, 'mismatch':-1, 'gap_open':-1, 'gap_extd': -0.5}
+    cache_file:str
+        The path to a temp file to store/pull alignment calculation results from. 
     
     Returns
     -------
     average_percent_matches: float
         The average percent match between seq1 and seq2. Calculated as: #matches / (#matches + #mismataches); gaps are not included
     '''
+
+    if cache_file:
+        with open(cache_file, 'r') as file:
+            freader = csv.reader(file)
+            for record in freader:
+                if (record[0] == seq1 and record[1] == seq2) or (record[0] == seq2 and record[1] == seq1):
+                    return record[2]
+        
 
     #A list of percent matches of all the alignments - used to calculate the average 
     percent_matches = []
@@ -64,6 +74,12 @@ def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open
         return 0
 
     average_percent_matches = sum(percent_matches)/len(percent_matches)
+
+    if cache_file:
+        with open(cache_file, 'a') as file:
+            fwriter = csv.writer(file)
+            fwriter.writerow([seq1, seq2,average_percent_matches])
+
     return average_percent_matches
 
 
@@ -112,7 +128,7 @@ def get_centroid(sequences):
 
 
 
-def sim_filter(sequences, threshold_percent_id):
+def sim_filter(sequences, threshold_percent_id, cache_file=None):
     '''
     Filters a set of sequences so no two sequences have a percent ID higher than the threshold. 
 
@@ -122,6 +138,8 @@ def sim_filter(sequences, threshold_percent_id):
         A list of sequences
     threshold_percent_id: float
         The threshold identity for the returned set of sequences (i.e. 0.75)
+    cache_file:str
+        The path to a temp file to store/pull alignment calculation results from. 
 
     Returns
     -------
@@ -156,7 +174,7 @@ def sim_filter(sequences, threshold_percent_id):
             if len(seq) < 1:
                 continue
 
-            mp = get_percent_matches(seq, bins[bin_key][0])
+            mp = get_percent_matches(seq, bins[bin_key][0], cache_file)
 
             if mp == None:
                 print(seq)

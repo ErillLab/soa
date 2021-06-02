@@ -44,7 +44,7 @@ class OperonCluster:
         tqdm.write('----- Pre-filtering: ' + str(len(all_promoters)))
         
         #Filter the promoters
-        self.filtered_promoters = sim_filter(all_promoters, threshold_percent_id=threshold_percent_id)
+        self.filtered_promoters = sim_filter(all_promoters, threshold_percent_id=threshold_percent_id, cache_file='../sim_filter_bin/'+str(self.cluster_id)+'sim-filter-cache.csv')
 
         tqdm.write('----- Post-filtering: ' + str(len(self.filtered_promoters)))
 
