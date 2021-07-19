@@ -13,22 +13,22 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
 * **GenomeFeature (soa_features.py)**
   *  A GenomeFeature object refers to a specific feature that is pulled from the Genebank record of interest.
   *  Memeber variables:
-      * `genome_accession` - `str` 
-      * `protein_accession` - `str`
-      * `locus_tag` - `str`
-      * `genome_fragment_name` - `str`
-      * `coding_start` - `int`
-      * `coding_end` - `int`
-      * `strand` - `+ or -`
-      * `five_end` - `int`
-      * `three_end` - `int`
-      * `aa_sequence` - `str`
-      * `req_limit` - `int`
-      * `sleep_time` - `int`
-    * Functions:
-      * `get_intergenic_distance(self, other)` - returns `int`
-      * `__str__(self)`
-      * `__eq__(self, other)`
+     * `genome_accession` - `str` 
+     * `protein_accession` - `str`
+     * `locus_tag` - `str`
+     * `genome_fragment_name` - `str`
+     * `coding_start` - `int`
+     * `coding_end` - `int`
+     * `strand` - `+ or -`
+     * `five_end` - `int`
+     * `three_end` - `int`
+     * `aa_sequence` - `str`
+     * `req_limit` - `int`
+     * `sleep_time` - `int`
+   * Member Functions:
+     * `get_intergenic_distance(self, other)` - returns `int`
+     * `__str__(self)`
+     * `__eq__(self, other)`
 
 
 * **AnnotatedHit(GenomeFeature) (soa_features.py)**
@@ -46,6 +46,19 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
     * `__str__(self)`
     * `__eq__(self, other)`
 
+* **Operon (soa_operon.py)**
+  * An instance of the Operon class is made for each operon that is reassembeled/discovered in each GenomeFragment.
+  * Member variables:
+    * `features` - `GenomeFeature[]`
+    * `operon_id` - `str`
+    * `cluster_id` - `str`
+    * `genome_fragment_name` - `str`
+    * `genome_fragment_accession` - `str`
+    * `genome_features` - `GenomeFeature[]` 
+    * `strand` - `+ or -`
+    * `promoter` - `str`
+   * Member Functions:
+     * `add_feature(self, feature)` 
 
 * **GenomeFragment (soa_genome_fragment.py)**
   * An instance of the GenomeFragment class is made for each nucleotide record that is analyzed.
@@ -61,7 +74,7 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
     * `req_limit` - `int`
     * `sleep_time` - `int`
     * `full_record` - `[GenomeFeature]`
-   * Relevant Member functions:
+   * Relevant Member Functions:
      * `fetch_features(self)`
      * `fetch_record(self)`
      * `fetch_hit_features(self)`
@@ -70,6 +83,5 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
      * `sort_hits(self)`
      * `assemble_operons(self, operon_id, feature_limit=3, intergenic_limit=1500)`
      * `get_promoters(self)`
-     * 
 
 
