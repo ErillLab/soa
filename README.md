@@ -42,7 +42,7 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
     * `percent_identity` - `float`
     * `alignment_seq` - `str`
   * Additional Functions:
-    * `fetch_feature(self, record, coverage_cutoff=0.25)`
+    * `fetch_feature(self, record, coverage_cutoff)`
     * `__str__(self)`
     * `__eq__(self, other)`
 
@@ -81,7 +81,7 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
      * `purge_hits(self)`
      * `add_hit(self, a_hit)`
      * `sort_hits(self)`
-     * `assemble_operons(self, operon_id, feature_limit=3, intergenic_limit=1500)`
+     * `assemble_operons(self, operon_id, feature_limit, intergenic_limit)`
      * `get_promoters(self)`
  
 * **soa_motif_analysis.py**
