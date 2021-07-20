@@ -83,5 +83,13 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
      * `sort_hits(self)`
      * `assemble_operons(self, operon_id, feature_limit=3, intergenic_limit=1500)`
      * `get_promoters(self)`
+ 
+* **soa_motif_analysis.py**
+  * This module contains the functions that are used for the motif analysis part of the pipeline.
+  * Relevant Member Functions:
+    * `run_meme(input_file, output_dir, num_motifs, width_min, width_max, mode, pal, meme_exec_path)`
+    * ` get_motifs(meme_data_dir, e_val_threshold)`
+    * `def calculate_motif_distance(motif, other, distance_function, offset, padded, add_psuedocounts, psuedocount_val, scaling_factor)`
+    * `def find_pattern(target_motif, self_score_ratio_threshold, kmer_pair_score_ratio_threshold, spacer_score_ratio_threshold)`
 
 
