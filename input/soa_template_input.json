@@ -26,7 +26,7 @@
     "operon_prom_assemb":[{
         "promoter_min_width": 10,
         "promoter_max_width": 300,
-        "max_seq_sim": 0.85,
+        "max_seq_sim": 0.75,
         "operon_max_intergenic_distance": 150
     }],
 

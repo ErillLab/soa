@@ -204,7 +204,7 @@ def pwm_col(motif_pwm, col):
     col = dict((let, motif_pwm[let][col]) for let in "ACTG")
     return col
 
-def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, psuedocount_val=0.25, scaling_factor=1):
+def calculate_motif_distance_calc(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, psuedocount_val=0.25, scaling_factor=1):
     '''
     Calculates the distance between two motifs by: (1) finding the maximum information content alignment and (2) determining the euclidian distance of that alignment.
 
@@ -225,7 +225,7 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
     if offset is None:
         offset = get_alignment_offset(motif, other)
     if offset < 0:
-        return calculate_motif_distance(other, motif, distance_function, -1*offset, padded=padded, add_psuedocounts=add_psuedocounts, psuedocount_val=psuedocount_val, scaling_factor=scaling_factor)
+        return calculate_motif_distance_calc(other, motif, distance_function, -1*offset, padded=padded, add_psuedocounts=add_psuedocounts, psuedocount_val=psuedocount_val, scaling_factor=scaling_factor)
 
     dists = []
     alignment_length = min(len(motif), len(other)-offset)
@@ -277,8 +277,14 @@ def calculate_motif_distance(motif, other, distance_function, offset=None, padde
         else:
             toReturn = scaling_factor/(1+(sum(dists) / len(dists)))
         
-    print(toReturn)
+    #print(toReturn)
     return toReturn
+
+def calculate_motif_distance(motif, other, distance_function, offset=None, padded=True, add_psuedocounts=True, psuedocount_val=0.25, scaling_factor=1):
+    return max(
+        calculate_motif_distance_calc(motif, other, distance_function, offset=offset, padded=padded, add_psuedocounts=add_psuedocounts, psuedocount_val=psuedocount_val, scaling_factor=scaling_factor),
+        calculate_motif_distance_calc(motif, other.reverse_complement(), offset=offset, padded=padded, add_psuedocounts=add_psuedocounts, psuedocount_val=psuedocount_val, scaling_factor=scaling_factor)
+    )
 
 ################## Functions below are all collectively used to determine whether a motif contains a direct or inverted repeat. ###################
 # Approach:

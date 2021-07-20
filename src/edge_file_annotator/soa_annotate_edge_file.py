@@ -117,7 +117,7 @@ def get_prot_info(prot_id, genome_records=ref_genome_records):
  
     return prot_info
                             
-'''
+
 ##### PARSE THE REFERENCE GENOMES ###########
 
 for file in os.listdir(path=ref_genome_path):
@@ -161,11 +161,11 @@ for i in tqdm(range(len(cluster_defs_reader[1:])), desc='Parsing Cluster Defs'):
     
     cluster_definitions[curr_clstr_id] = {}
     for pid in curr_prot_ids:
-        cluster_definitions[curr_clstr_id][pid] = get_prot_info(pid)'''
+        cluster_definitions[curr_clstr_id][pid] = get_prot_info(pid)
 
-'''for c in tqdm(cluster_definitions.keys(), desc="Motif Preproccessing"):
-    get_cluster_motifs(c)'''
-'''
+for c in tqdm(cluster_definitions.keys(), desc="Motif Preproccessing"):
+    get_cluster_motifs(c)
+
 with open('cluster_defs.json', 'w') as file:
     json.dump(cluster_definitions, file)
 
@@ -246,4 +246,4 @@ for row in tqdm(new_edges_file_reader, desc='Writing HTML File'):
 
 #Add the closing tags and write to file
 html_content += '</table>\n</body></html>'
-html_writer.write(html_content)
+html_writer.write(html_content)'''

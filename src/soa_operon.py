@@ -12,7 +12,7 @@ class Operon:
         self.operon_id = operon_id
         self.cluster_id = operon_id.split('_')[3].replace(' ', '')
         self.genome_fragment_name = genome_fragment_name
-        self.genome_accession =genome_accession
+        self.genome_accession = genome_accession
         self.genome_features = genome_features
         self.strand = strand
         self.promoter = None

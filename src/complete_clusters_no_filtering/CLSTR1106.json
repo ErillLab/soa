@@ -1,0 +1,1 @@
+{"cluster_id": "CLSTR1106", "operons": [{"operon_id": "2774_VC0100_ODB_CLSTR1106", "cluster_id": "CLSTR1106", "genome_accession": "NZ_JYJJ01000053.1", "genome_fragment_name": "Vibrio_maritimus_strain_CAIM_1455_contig00069_whole_genome_shotgun", "features": ["WP_112461301.1"], "promoter": "tgtttatcctcg", "strand": "+"}], "filtered_promoters": [], "motifs": []}

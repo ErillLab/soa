@@ -519,8 +519,6 @@ class GenomeFragment:
             return None
         
 
-
-
     def get_next_feature(self, current_feature):
         '''
         Get the next feature in the genome that is on the same strand (always considers it from 5'-3' regardless of strand)

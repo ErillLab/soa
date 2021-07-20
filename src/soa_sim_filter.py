@@ -6,7 +6,9 @@ Holds functions relevant for similarity filter in sys_analysis.py.
 '''
 
 from Bio import pairwise2
+from Bio.motifs import Motif, Instances
 import random
+import csv
 
 def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open':-1, 'gap_extd': -0.5}, cache_file=None):
     '''
@@ -38,7 +40,6 @@ def get_percent_matches(seq1, seq2, scoring={'match':2, 'mismatch':-1, 'gap_open
 
     #A list of percent matches of all the alignments - used to calculate the average 
     percent_matches = []
-
     for a in pairwise2.align.globalms(seq1, seq2, scoring['match'], scoring['mismatch'], scoring['gap_open'], scoring['gap_extd']):
         #The format of an alignment:
             # [0] : first sequence aligned
@@ -173,8 +174,8 @@ def sim_filter(sequences, threshold_percent_id, cache_file=None):
         for seq in sequences:
             if len(seq) < 1:
                 continue
-
-            mp = float(get_percent_matches(seq, bins[bin_key][0], cache_file))
+            
+            mp = float(get_percent_matches(seq1=seq, seq2=bins[bin_key][0], cache_file=cache_file))
 
             if mp == None:
                 print(seq)
@@ -193,7 +194,8 @@ def sim_filter(sequences, threshold_percent_id, cache_file=None):
     #Get the centroid for each bin and return the final filtered list
     filtered_seqs = []
     for key in bins.keys():
-        filtered_seqs.append(bins[key][int(random.random() * (len(bins[key]) - 1))])
+        filtered_seqs.append(bins[key][0])
+        #filtered_seqs.append(bins[key][int(random.random() * (len(bins[key]) - 1))])
         #filtered_seqs.append(get_centroid(bins[key]))
     
     return filtered_seqs
