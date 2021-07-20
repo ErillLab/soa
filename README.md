@@ -92,4 +92,8 @@ This core comparative genomics of this pipeline is a modified, high throughput, 
     * `def calculate_motif_distance(motif, other, distance_function, offset, padded, add_psuedocounts, psuedocount_val, scaling_factor)`
     * `def find_pattern(target_motif, self_score_ratio_threshold, kmer_pair_score_ratio_threshold, spacer_score_ratio_threshold)`
 
+* **soa_sim_filter.py**
+  * This module contains the functions that are used for the similarity-based filtering of the promoter sequences.
+  * Relevant Memeber Functions:
+    * `sim_filter(sequences, threshold_percent_id, cache_file)`
 
